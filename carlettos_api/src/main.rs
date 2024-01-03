@@ -2,14 +2,14 @@
 extern crate rocket;
 
 use cors::CORS;
-use db::{AffectedRows, DB};
+use db::{AffectedRows, Task, DB};
 use rocket::{serde::json::Json, State};
 
 use std::{
     io::{self, ErrorKind},
     sync::Arc,
 };
-use surrealdb::{opt::auth::Root, sql::Object};
+use surrealdb::opt::auth::Root;
 
 pub mod error;
 pub mod prelude;
@@ -21,16 +21,16 @@ pub mod cors;
 pub mod db;
 
 #[post("/task/<title>")]
-async fn add_task(title: String, db: &State<DB>) -> Result<Json<Object>, io::Error> {
+async fn add_task(title: String, db: &State<DB>) -> Result<Json<Task>, io::Error> {
     let task = db
         .add_task(title)
         .await
         .map_err(|_| io::Error::new(ErrorKind::Other, "Unable to create task"))?;
-    Ok(Json(task))
+    Ok(Json(task.into()))
 }
 
 #[get("/task/<id>")]
-async fn get_task(id: String, db: &State<DB>) -> Result<Json<Object>, io::Error> {
+async fn get_task(id: String, db: &State<DB>) -> Result<Json<Task>, io::Error> {
     let task = db
         .get_task(id)
         .await
@@ -39,7 +39,7 @@ async fn get_task(id: String, db: &State<DB>) -> Result<Json<Object>, io::Error>
 }
 
 #[get("/tasks")]
-async fn get_all_tasks(db: &State<DB>) -> Result<Json<Vec<Object>>, io::Error> {
+async fn get_all_tasks(db: &State<DB>) -> Result<Json<Vec<Task>>, io::Error> {
     let tasks = db
         .get_all_tasks()
         .await
@@ -66,10 +66,10 @@ async fn delete_task(id: String, db: &State<DB>) -> Result<Json<AffectedRows>, i
 }
 
 async fn connect(db: &DB) -> Result<(), prelude::Error> {
-    db.ds.use_ns("root").await?;
-    db.ds.use_db("database").await?;
+    db.db.use_ns("root").await?;
+    db.db.use_db("database").await?;
 
-    db.ds
+    db.db
         .signin(Root {
             username: "root",
             password: "root",
@@ -81,13 +81,13 @@ async fn connect(db: &DB) -> Result<(), prelude::Error> {
 
 #[launch]
 async fn rocket() -> _ {
-    let ds = Arc::new(
-        surrealdb::engine::any::connect("ws://localhost:8000")
+    let db = Arc::new(
+        surrealdb::engine::any::connect("ws://0.0.0.0:8000")
             .await
             .unwrap(),
     );
 
-    let db = DB { ds };
+    let db = DB { db };
     connect(&db).await.unwrap();
 
     rocket::build()

@@ -1,10 +1,21 @@
 use std::rc::Rc;
-use yew::prelude::*;
+use yew::{html::Scope, prelude::*};
+use yew_router::prelude::*;
 
 mod controllers;
 mod models;
 mod state;
 mod sub_api;
+
+mod pages {
+    mod chess_games;
+    mod home;
+    mod page_not_found;
+
+    pub use chess_games::*;
+    pub use home::*;
+    pub use page_not_found::*;
+}
 
 mod components {
     mod task_form;
@@ -15,57 +26,121 @@ mod components {
     pub use task_item::*;
     pub use task_list::*;
 }
+use crate::components::*;
+use crate::controllers::*;
+use crate::pages::*;
+use crate::state::*;
 
-use components::*;
-use controllers::*;
-use state::*;
+#[derive(Debug, Routable, PartialEq, Eq, Clone)]
+pub enum Route {
+    #[at("/chess")]
+    ChessGames,
+    #[at("/")]
+    Home,
+    #[not_found]
+    #[at("/404")]
+    NotFound,
+}
 
-#[function_component(App)]
-fn app() -> Html {
-    let tasks = use_reducer(TaskState::default);
-    let tasks_controller = Rc::new(TaskController::new(tasks.clone()));
+pub enum Msg {
+    ToggleNavbar,
+}
 
-    {
-        let tasks_controller = tasks_controller.clone();
-        use_effect_with((), move |_| {
-            tasks_controller.init_tasks();
-            || () // return empty destructor closure
-        }); // only call on first render
+pub struct App {
+    navbar_active: bool,
+}
+
+impl Component for App {
+    type Message = Msg;
+    type Properties = ();
+
+    fn create(ctx: &Context<Self>) -> Self {
+        Self {
+            navbar_active: false,
+        }
     }
 
-    let on_create_task = {
-        let tasks_controller = tasks_controller.clone();
-        Callback::from(move |title: String| {
-            tasks_controller.create_task(title);
-        })
-    };
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            Msg::ToggleNavbar => {
+                self.navbar_active = !self.navbar_active;
+                true
+            }
+        }
+    }
 
-    let on_delete_task = {
-        let tasks_controller = tasks_controller.clone();
-        Callback::from(move |id: String| {
-            tasks_controller.delete_task(id);
-        })
-    };
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        html! {
+            <BrowserRouter>
+                { self.view_nav(ctx.link()) }
 
-    let on_toggle_task = {
-        let tasks_controller = tasks_controller.clone();
-        Callback::from(move |id: String| {
-            tasks_controller.toggle_task(id);
-        })
-    };
+                <main>
+                    <Switch<Route> render={switch}/>
+                </main>
+                <footer class="footer">
+                    <div class="content has-text-centered">
+                        { "Soy gay" }
+                    </div>
+                </footer>
+            </BrowserRouter>
+        }
+    }
+}
 
-    html! {
-        <div class="container">
-            <TaskForm on_create_task={on_create_task} />
-            <h3>{ "Todo" }</h3>
-            <div>
-                <TaskList
-                    tasks={tasks.tasks.clone()}
-                    on_delete_task={on_delete_task}
-                    on_toggle_task={on_toggle_task}
-                />
-            </div>
-        </div>
+impl App {
+    fn view_nav(&self, link: &Scope<Self>) -> Html {
+        let Self { navbar_active } = *self;
+
+        let active_class = if !navbar_active { "is-active" } else { "" };
+
+        html! {
+            <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+                <div class="navbar-brand">
+                    <h1 class="navbar-item is-size-3">{ "Hola???" }</h1>
+
+                    <button class={classes!("navbar-burger", "burger", active_class)}
+                        aria-label="menu" aria-expanded="false"
+                        onclick={link.callback(|_| Msg::ToggleNavbar)}
+                    >
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class={classes!("navbar-menu", active_class)}>
+                    <div class="navbar-start">
+                        <Link<Route> classes={classes!("navbar-item")} to={Route::Home}>
+                            { "Home" }
+                        </Link<Route>>
+
+                        <div class="navbar-item has-dropdown is-hoverable">
+                            <div class="navbar-link">
+                                { "More" }
+                            </div>
+                            <div class="navbar-dropdown">
+                                <Link<Route> classes={classes!("navbar-item")} to={Route::ChessGames}>
+                                    { "Chess?" }
+                                </Link<Route>>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        }
+    }
+}
+
+fn switch(routes: Route) -> Html {
+    match routes {
+        Route::Home => {
+            html! { <Home /> }
+        }
+        Route::ChessGames => {
+            html! { <ChessGames /> }
+        }
+        Route::NotFound => {
+            html! { <PageNotFound /> }
+        }
     }
 }
 

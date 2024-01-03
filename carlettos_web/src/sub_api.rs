@@ -2,7 +2,7 @@ use reqwasm::{http::Request, Error};
 
 use crate::models::{AffectedRows, Task};
 
-const BASE_URL: &str = "http://localhost:8080";
+const BASE_URL: &str = "http://bore.pub:3123";
 
 pub async fn fetch_tasks() -> Result<Vec<Task>, Error> {
     Request::get(&format!("{BASE_URL}/tasks"))
