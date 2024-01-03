@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use yew::{html::Scope, prelude::*};
 use yew_router::prelude::*;
 
@@ -26,10 +25,7 @@ mod components {
     pub use task_item::*;
     pub use task_list::*;
 }
-use crate::components::*;
-use crate::controllers::*;
 use crate::pages::*;
-use crate::state::*;
 
 #[derive(Debug, Routable, PartialEq, Eq, Clone)]
 pub enum Route {
@@ -54,13 +50,13 @@ impl Component for App {
     type Message = Msg;
     type Properties = ();
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_: &Context<Self>) -> Self {
         Self {
             navbar_active: false,
         }
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::ToggleNavbar => {
                 self.navbar_active = !self.navbar_active;
