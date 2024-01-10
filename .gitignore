@@ -1,2 +1,5 @@
 target/
 .trunk/
+carlettos_web/dist/
+log.*
+db/storage/

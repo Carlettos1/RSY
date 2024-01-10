@@ -1,6 +1,30 @@
+use chess_api::Board;
 use yew::Reducible;
 
 use crate::models::Task;
+
+pub enum ChessAction {
+    Get(Board),
+    Update(Board),
+}
+
+#[derive(Default)]
+pub struct ChessState {
+    pub board: Board,
+}
+
+impl Reducible for ChessState {
+    type Action = ChessAction;
+
+    fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
+        let next_chess = match action {
+            ChessAction::Update(board) => board,
+            ChessAction::Get(board) => board,
+        };
+
+        Self { board: next_chess }.into()
+    }
+}
 
 pub enum TaskAction {
     Set(Vec<Task>),

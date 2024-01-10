@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "carlettos_api",
-    "carlettos_web"
+    "carlettos_web",
+    "chess_api"
 ]

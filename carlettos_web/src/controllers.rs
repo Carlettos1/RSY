@@ -1,9 +1,46 @@
+use chess_api::Board;
 use yew::UseReducerHandle;
 
 use crate::{
-    state::{TaskAction, TaskState},
+    state::{ChessAction, ChessState, TaskAction, TaskState},
     sub_api,
 };
+
+pub struct ChessController {
+    state: UseReducerHandle<ChessState>,
+}
+
+impl ChessController {
+    pub fn new(state: UseReducerHandle<ChessState>) -> ChessController {
+        ChessController { state }
+    }
+
+    pub fn get_chess(&self) {
+        let chess = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let fetched_board = sub_api::get_chess_game().await.unwrap();
+            chess.dispatch(ChessAction::Get(fetched_board))
+        })
+    }
+
+    pub fn update_chess(&self, board: Board) {
+        let chess = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let updated_board = sub_api::update_chess_game(board).await.unwrap();
+            chess.dispatch(ChessAction::Update(updated_board))
+        })
+    }
+
+    pub fn on_click(&self, from: (usize, usize)) {
+        let chess = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let mut board = chess.board.clone();
+            board.on_click(from);
+            let updated_board = sub_api::update_chess_game(board).await.unwrap();
+            chess.dispatch(ChessAction::Update(updated_board))
+        })
+    }
+}
 
 pub struct TaskController {
     state: UseReducerHandle<TaskState>,

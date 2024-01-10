@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use chess_api::Board;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use surrealdb::engine::any::Any;
@@ -10,6 +11,7 @@ use surrealdb::sql::Value;
 use surrealdb::Surreal;
 
 use crate::prelude;
+use crate::prelude::IdBoard;
 use crate::utils::macros::map;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -118,11 +120,52 @@ impl DB {
         }
     }
 
+    pub async fn create_chess_game(&self) -> Result<IdBoard, prelude::Error> {
+        if let Some(board) = self.db.select(("chess", 0)).await? {
+            Ok(board)
+        } else {
+            let query = "CREATE chess SET board = $json, id = 0;";
+            let result = self
+                .db
+                .query(query)
+                .bind(("json", Board::default()))
+                .await?
+                .take::<Option<IdBoard>>(0)?;
+            if let Some(board) = result {
+                Ok(board)
+            } else {
+                Err(prelude::Error::ValueNotFound(
+                    "Couldn't create chess games".to_string(),
+                ))
+            }
+        }
+    }
+
     pub async fn get_task(&self, id: String) -> Result<Task, prelude::Error> {
         if let Some(task) = self.db.select(("tasks", &id)).await? {
             Ok(task)
         } else {
             Err(prelude::Error::ValueNotFound(id))
+        }
+    }
+
+    pub async fn get_chess_game(&self) -> Result<IdBoard, prelude::Error> {
+        if let Some(board) = self.db.select(("chess", 0)).await? {
+            Ok(board)
+        } else {
+            Err(prelude::Error::ValueNotFound(
+                "Chess game not found".to_string(),
+            ))
+        }
+    }
+
+    pub async fn update_chess_game(&self, board: IdBoard) -> Result<IdBoard, prelude::Error> {
+        if let Some(board) = self.db.update(("chess", 0)).content(board).await? {
+            Ok(board)
+        } else {
+            Err(prelude::Error::ValueNotFound(
+                "Chess game cannot be updated".to_string(),
+            ))
         }
     }
 

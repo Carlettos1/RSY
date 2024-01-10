@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
+use chess_api::Board;
 use cors::CORS;
 use db::{AffectedRows, Task, DB};
 use rocket::{serde::json::Json, State};
@@ -65,6 +66,24 @@ async fn delete_task(id: String, db: &State<DB>) -> Result<Json<AffectedRows>, i
     Ok(Json(affected_rows))
 }
 
+#[get("/chess")]
+async fn get_chess_game(db: &State<DB>) -> Result<Json<Board>, io::Error> {
+    let board = db
+        .get_chess_game()
+        .await
+        .map_err(|_| io::Error::new(ErrorKind::Other, "Unable to get chess game"))?;
+    Ok(Json(board.board))
+}
+
+#[patch("/chess/<json>")]
+async fn update_chess_game(json: String, db: &State<DB>) -> Result<Json<Board>, io::Error> {
+    let board = db
+        .update_chess_game(serde_json::from_str::<Board>(&json).unwrap().into())
+        .await
+        .map_err(|_| io::Error::new(ErrorKind::Other, "Unable to update chess game"))?;
+    Ok(Json(board.board))
+}
+
 async fn connect(db: &DB) -> Result<(), prelude::Error> {
     db.db.use_ns("root").await?;
     db.db.use_db("database").await?;
@@ -90,10 +109,21 @@ async fn rocket() -> _ {
     let db = DB { db };
     connect(&db).await.unwrap();
 
+    // this should create a game if not exist, if exist, will do nothing
+    db.create_chess_game().await.unwrap();
+
     rocket::build()
         .mount(
             "/",
-            routes![add_task, get_task, get_all_tasks, toggle_task, delete_task],
+            routes![
+                add_task,
+                get_task,
+                get_all_tasks,
+                toggle_task,
+                delete_task,
+                get_chess_game,
+                update_chess_game
+            ],
         )
         .attach(CORS)
         .manage(db)

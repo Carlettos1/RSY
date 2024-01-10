@@ -7,11 +7,13 @@ mod state;
 mod sub_api;
 
 mod pages {
-    mod chess_games;
+    pub mod chess;
+    mod game_of_life;
     mod home;
     mod page_not_found;
 
-    pub use chess_games::*;
+    pub use chess::*;
+    pub use game_of_life::*;
     pub use home::*;
     pub use page_not_found::*;
 }
@@ -25,12 +27,21 @@ mod components {
     pub use task_item::*;
     pub use task_list::*;
 }
+
+mod cells {
+    mod cell;
+
+    pub use cell::*;
+}
+
 use crate::pages::*;
 
 #[derive(Debug, Routable, PartialEq, Eq, Clone)]
 pub enum Route {
     #[at("/chess")]
-    ChessGames,
+    Chess,
+    #[at("/game_of_life")]
+    GameOfLife,
     #[at("/")]
     Home,
     #[not_found]
@@ -114,8 +125,11 @@ impl App {
                                 { "More" }
                             </div>
                             <div class="navbar-dropdown">
-                                <Link<Route> classes={classes!("navbar-item")} to={Route::ChessGames}>
+                                <Link<Route> classes={classes!("navbar-item")} to={Route::Chess}>
                                     { "Chess?" }
+                                </Link<Route>>
+                                <Link<Route> classes={classes!("navbar-item")} to={Route::GameOfLife}>
+                                    { "Game Of Life" }
                                 </Link<Route>>
                             </div>
                         </div>
@@ -131,15 +145,19 @@ fn switch(routes: Route) -> Html {
         Route::Home => {
             html! { <Home /> }
         }
-        Route::ChessGames => {
-            html! { <ChessGames /> }
+        Route::Chess => {
+            html! { <crate::pages::chess::ChessBoard /> }
         }
         Route::NotFound => {
             html! { <PageNotFound /> }
+        }
+        Route::GameOfLife => {
+            html! { <GameOfLife /> }
         }
     }
 }
 
 fn main() {
+    wasm_logger::init(wasm_logger::Config::default());
     yew::Renderer::<App>::new().render();
 }

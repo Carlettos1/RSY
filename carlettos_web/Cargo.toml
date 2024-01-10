@@ -3,8 +3,6 @@ name = "carlettos_web"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["console"] }
@@ -14,4 +12,9 @@ yew-router = "0.18"
 reqwasm = "0.5"
 serde = { version ="*", features = ["derive"] }
 chrono = { version = "*", features = ["serde", "wasmbind"] }
+chess_api = { path = "../chess_api" }
 serde_json = "1.0"
+rand = "0.8"
+gloo = "0.11"
+log = "0.4"
+wasm-logger = "0.2"
