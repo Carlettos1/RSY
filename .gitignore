@@ -3,3 +3,5 @@ target/
 carlettos_web/dist/
 log.*
 db/storage/
+*/history.txt
+mprocs.log
