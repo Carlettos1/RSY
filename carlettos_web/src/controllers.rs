@@ -1,4 +1,4 @@
-use chess_api::Board;
+use chess_api::{Board, Color};
 use yew::UseReducerHandle;
 
 use crate::{
@@ -39,6 +39,10 @@ impl ChessController {
             let updated_board = sub_api::update_chess_game(board).await.unwrap();
             chess.dispatch(ChessAction::Update(updated_board))
         })
+    }
+
+    pub fn winner(&self) -> &Option<Color> {
+        &self.state.winner
     }
 }
 

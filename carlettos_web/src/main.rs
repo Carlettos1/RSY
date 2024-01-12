@@ -7,15 +7,17 @@ mod state;
 mod sub_api;
 
 mod pages {
-    pub mod chess;
+    mod chess;
     mod game_of_life;
     mod home;
     mod page_not_found;
+    mod todo_app;
 
     pub use chess::*;
     pub use game_of_life::*;
     pub use home::*;
     pub use page_not_found::*;
+    pub use todo_app::*;
 }
 
 mod components {
@@ -42,6 +44,8 @@ pub enum Route {
     Chess,
     #[at("/game_of_life")]
     GameOfLife,
+    #[at("/todo_app")]
+    TodoApp,
     #[at("/")]
     Home,
     #[not_found]
@@ -86,7 +90,7 @@ impl Component for App {
                 </main>
                 <footer class="footer">
                     <div class="content has-text-centered">
-                        { "Soy gay" }
+                        { "Made by Carlettos" }
                     </div>
                 </footer>
             </BrowserRouter>
@@ -103,7 +107,7 @@ impl App {
         html! {
             <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
                 <div class="navbar-brand">
-                    <h1 class="navbar-item is-size-3">{ "Hola???" }</h1>
+                    <h1 class="navbar-item is-size-3">{ "Happy" }</h1>
 
                     <button class={classes!("navbar-burger", "burger", active_class)}
                         aria-label="menu" aria-expanded="false"
@@ -122,11 +126,14 @@ impl App {
 
                         <div class="navbar-item has-dropdown is-hoverable">
                             <div class="navbar-link">
-                                { "More" }
+                                { "Apps" }
                             </div>
                             <div class="navbar-dropdown">
+                                <Link<Route> classes={classes!("navbar-item")} to={Route::TodoApp}>
+                                    { "Todo App" }
+                                </Link<Route>>
                                 <Link<Route> classes={classes!("navbar-item")} to={Route::Chess}>
-                                    { "Chess?" }
+                                    { "Chess" }
                                 </Link<Route>>
                                 <Link<Route> classes={classes!("navbar-item")} to={Route::GameOfLife}>
                                     { "Game Of Life" }
@@ -143,10 +150,13 @@ impl App {
 fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => {
-            html! { <Home /> }
+            html! { <Home/> }
+        }
+        Route::TodoApp => {
+            html! { <TodoApp /> }
         }
         Route::Chess => {
-            html! { <crate::pages::chess::ChessBoard /> }
+            html! { <ChessBoard /> }
         }
         Route::NotFound => {
             html! { <PageNotFound /> }

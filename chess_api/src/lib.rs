@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Board {
     pub pieces: Vec<Option<Piece>>,
     pub piece_selected: Option<(usize, usize)>,
+    pub en_passant_square: Option<(usize, usize)>,
     pub take_squares: Vec<(usize, usize)>,
     pub move_squares: Vec<(usize, usize)>,
     pub turn: Color,
@@ -58,19 +59,97 @@ impl Board {
         self.pieces = starting_pieces();
     }
 
+    fn get_king_pos(&self, color: &Color) -> Option<(usize, usize)> {
+        self.pieces.iter().enumerate().find_map(|(i, p)| match p {
+            Some(Piece::King(k)) if &k.color == color => Some(index_to_point(i)),
+            _ => None,
+        })
+    }
+
+    pub fn is_check_mate(&self, color: &Color) -> bool {
+        if self.is_check(color) {
+            let king_pos = self.get_king_pos(color).unwrap();
+            let piece = self.get(&king_pos).as_ref().unwrap();
+            let mut possible_moves = Vec::with_capacity(8);
+
+            for pos in (0..64).map(index_to_point) {
+                if piece.can_move(self, &king_pos, &pos) || piece.can_take(self, &king_pos, &pos) {
+                    possible_moves.push(pos);
+                }
+            }
+
+            for possible_move in possible_moves {
+                let mut cloned = self.clone();
+                cloned.turn = color.clone();
+                cloned.on_click(king_pos);
+                cloned.on_click(possible_move);
+                if !cloned.inner_is_check(color) {
+                    return false;
+                }
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_check(&self, color: &Color) -> bool {
+        self.clone().inner_is_check(color)
+    }
+
+    /// This set the current turn to the oposite color to allow the can_take method.
+    fn inner_is_check(&mut self, color: &Color) -> bool {
+        self.turn = color.other();
+        let king_pos = match self.get_king_pos(color) {
+            Some(pos) => pos,
+            None => return false,
+        };
+
+        for (from, piece) in self.pieces.iter().enumerate().flat_map(|(x, p)| match p {
+            Some(piece) if piece.color() != color => Some((index_to_point(x), piece)),
+            _ => None,
+        }) {
+            if piece.can_take(self, &from, &king_pos) {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn on_click(&mut self, from: (usize, usize)) -> bool {
+        let mut cloned = self.clone();
+        if cloned.inner_on_click(from) {
+            log::info!("check: {}", cloned.inner_is_check(&self.turn));
+            if cloned.inner_is_check(&self.turn) {
+                return false;
+            }
+        }
+        self.inner_on_click(from)
+    }
+
+    /// Returns true if a piece moved
+    fn inner_on_click(&mut self, from: (usize, usize)) -> bool {
         let piece = &self.pieces[point_to_index(from)];
         if self.move_squares.contains(&from) || self.take_squares.contains(&from) {
-            // move
-            self.pieces[point_to_index(self.piece_selected.unwrap())]
+            let piece_selected = self.piece_selected.unwrap();
+            // handle en passant take
+            if let Some(en_passant) = self.en_passant_square {
+                if let Some(Piece::Pawn(p)) = &self.pieces[point_to_index(piece_selected)] {
+                    if from == en_passant && self.take_squares.contains(&from) {
+                        match p.color {
+                            Color::Black => self.pieces[point_to_index((from.0, 4))] = None,
+                            Color::White => self.pieces[point_to_index((from.0, 3))] = None,
+                        }
+                    }
+                }
+            }
+            self.pieces[point_to_index(piece_selected)]
                 .as_mut()
                 .unwrap()
-                .on_moved();
+                .on_moved(&mut self.en_passant_square, &piece_selected, &from);
             self.pieces[point_to_index(from)] = None;
-            self.pieces.swap(
-                point_to_index(self.piece_selected.unwrap()),
-                point_to_index(from),
-            );
+            self.pieces
+                .swap(point_to_index(piece_selected), point_to_index(from));
             self.move_squares.clear();
             self.take_squares.clear();
             self.piece_selected = None;
@@ -79,6 +158,11 @@ impl Board {
         } else {
             self.move_squares.clear();
             self.take_squares.clear();
+            if let Some(piece) = piece {
+                if piece.color() != &self.turn {
+                    return false;
+                }
+            }
             self.piece_selected = Some(from);
             if let Some(piece) = piece {
                 for to in (0..64).map(index_to_point) {
@@ -102,6 +186,7 @@ impl Default for Board {
             piece_selected: None,
             take_squares: Vec::new(),
             move_squares: Vec::new(),
+            en_passant_square: None,
             turn: Color::White,
         }
     }
@@ -180,6 +265,18 @@ impl Piece {
                 return false;
             }
         } else {
+            // handle en passant case
+            if let Piece::Pawn(p) = self {
+                if let Some(pos) = board.en_passant_square {
+                    if pos == *to {
+                        match p.color {
+                            Color::Black if to.1 != 5 => return false,
+                            Color::White if to.1 != 2 => return false,
+                            _ => return p.can_take(board, from, to),
+                        }
+                    }
+                }
+            }
             return false;
         }
         match self {
@@ -210,10 +307,32 @@ impl Piece {
         }
     }
 
-    pub fn on_moved(&mut self) {
+    pub fn on_moved(
+        &mut self,
+        en_passant_square: &mut Option<(usize, usize)>,
+        from: &(usize, usize),
+        to: &(usize, usize),
+    ) {
+        // en passant is a immediate reaction.
+        *en_passant_square = None;
         match self {
             Piece::King(k) => k.has_moved = true,
             Piece::Rook(r) => r.has_moved = true,
+            Piece::Pawn(p) => {
+                // mark en passant tile
+                match p.color {
+                    Color::Black => {
+                        if from.1 == 1 && to.1 == 3 {
+                            *en_passant_square = Some((from.0, 2));
+                        }
+                    }
+                    Color::White => {
+                        if from.1 == 6 && to.1 == 4 {
+                            *en_passant_square = Some((from.0, 5));
+                        }
+                    }
+                }
+            }
             _ => (),
         }
     }

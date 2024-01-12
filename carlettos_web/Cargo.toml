@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["console"] }
-carlettos_api = { path = "../carlettos_api" }
 yew = { version = "0.21", features = ["csr"] }
 yew-router = "0.18"
 reqwasm = "0.5"

@@ -181,7 +181,7 @@ impl Component for GameOfLife {
             <div>
                 <section class="game-container">
                     <header class="app-header">
-                        <img alt="The app logo" src="favicon.ico" class="app-logo"/>
+                        <img alt="The app logo" src="assets/favicon.ico" class="app-logo"/>
                         <h1 class="app-title">{ "Game of Life" }</h1>
                     </header>
                     <section class="game-area">
@@ -197,6 +197,10 @@ impl Component for GameOfLife {
                         </div>
                     </section>
                 </section>
+                <div class="content has-text-centered">
+                    { "Copied from the examples in the yew " }
+                    <a href="https://github.com/yewstack/yew/tree/master/examples/game_of_life">{"repo"}</a>
+                </div>
             </div>
         }
     }

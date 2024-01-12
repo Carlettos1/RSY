@@ -1,0 +1,17 @@
+procs:
+  surreal:
+    cwd: "./db/"
+    cmd: ["surreal", "start", "file:storage/main.db", "-A", "--auth", "-u", "root", "-p", "root"]
+  api:
+    cwd: "./carlettos_api/"
+    cmd: ["cargo", "run", "-r"]
+  web:
+    cwd: "./carlettos_web"
+    cmd: ["trunk", "serve", "--port", "8081", "--release"]
+  bore_api:
+    cmd: ["bore", "local", "8080", "--to", "bore.pub"]
+  bore_web:
+    cmd: ["bore", "local", "8081", "--to", "bore.pub"]
+  surreal_sql:
+    cwd: "./db/"
+    cmd: ["surreal", "sql", "--user", "root", "--pass", "root"]

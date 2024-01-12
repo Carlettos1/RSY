@@ -2,5 +2,7 @@
 members = [
     "carlettos_api",
     "carlettos_web",
-    "chess_api"
+    "chess_api",
+    "carlettos_chess"
 ]
+resolver = "2"

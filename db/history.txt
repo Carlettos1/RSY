@@ -1,0 +1,10 @@
+#V2
+ns
+namespaces
+use ns root
+use db database
+tables
+select * from chess
+select chess:0 from chess;
+delete chess
+select * from chess

@@ -54,7 +54,7 @@ pub fn square(
         <div key={idx} class={classes!("chess-square", color)} onclick={on_square_click}>
             {
                 if piece.is_some() {
-                    html! { <img class={classes!("piece")} src={ format!("assets/{piece_name}.png") }/> } }
+                    html! { <img draggable={ "false" } class={classes!("piece")} src={ format!("assets/{piece_name}.png") }/> } }
                 else {
                     html! { }
                 }
@@ -123,18 +123,24 @@ pub fn chess() -> Html {
         }
     });
 
+    let chess_text = match chess_controller.winner() {
+        Some(Color::White) => "White Wins",
+        Some(Color::Black) => "Black Wins",
+        None => "Chess",
+    };
+
     html! {
         <div>
             <section class="chess-container">
                 <header>
-                    <h1>{ "Chess" }</h1>
+                    <h1>{ chess_text }</h1>
                 </header>
                 <section class="chess-board">
                     <div class="chess">
                         { for rows }
                     </div>
                     <div>
-                        <button onclick={on_button_click}>{ "Re-start" }</button>
+                        <button onclick={on_button_click}>{ "Restart" }</button>
                     </div>
                 </section>
             </section>

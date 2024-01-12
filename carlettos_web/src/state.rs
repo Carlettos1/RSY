@@ -1,4 +1,4 @@
-use chess_api::Board;
+use chess_api::{Board, Color};
 use yew::Reducible;
 
 use crate::models::Task;
@@ -11,6 +11,7 @@ pub enum ChessAction {
 #[derive(Default)]
 pub struct ChessState {
     pub board: Board,
+    pub winner: Option<Color>,
 }
 
 impl Reducible for ChessState {
@@ -22,7 +23,19 @@ impl Reducible for ChessState {
             ChessAction::Get(board) => board,
         };
 
-        Self { board: next_chess }.into()
+        let winner = if next_chess.is_check_mate(&Color::Black) {
+            Some(Color::White)
+        } else if next_chess.is_check_mate(&Color::White) {
+            Some(Color::Black)
+        } else {
+            None
+        };
+
+        Self {
+            board: next_chess,
+            winner,
+        }
+        .into()
     }
 }
 
