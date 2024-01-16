@@ -1,0 +1,314 @@
+use std::ops::{Add, AddAssign, Sub, SubAssign};
+
+use board::shape::Square;
+use piece::Piece;
+use serde::{Deserialize, Serialize};
+
+pub mod ability;
+pub mod board;
+pub mod card;
+pub mod pattern;
+pub mod piece;
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Pos {
+    pub x: usize,
+    pub y: usize,
+}
+
+impl From<(usize, usize)> for Pos {
+    fn from(value: (usize, usize)) -> Self {
+        Self {
+            x: value.0,
+            y: value.1,
+        }
+    }
+}
+
+impl Pos {
+    pub const fn new(x: usize, y: usize) -> Self {
+        Self { x, y }
+    }
+
+    pub fn is_inside(&self, square: &Square) -> bool {
+        self.x >= square.west()
+            && self.x < square.east()
+            && self.y >= square.south()
+            && self.y < square.north()
+    }
+
+    pub fn north(&self) -> Self {
+        Self {
+            x: self.x,
+            y: self.y + 1,
+        }
+    }
+
+    pub fn east(&self) -> Self {
+        Self {
+            x: self.x + 1,
+            y: self.y,
+        }
+    }
+
+    pub fn south(&self) -> Self {
+        Self {
+            x: self.x,
+            y: self.y - 1,
+        }
+    }
+
+    pub fn west(&self) -> Self {
+        Self {
+            x: self.x - 1,
+            y: self.y,
+        }
+    }
+}
+
+impl Add for Pos {
+    type Output = Pos;
+    fn add(self, Pos { x, y }: Self) -> Self::Output {
+        Pos {
+            x: self.x + x,
+            y: self.y + y,
+        }
+    }
+}
+
+impl Add for &Pos {
+    type Output = Pos;
+    fn add(self, Pos { x, y }: Self) -> Self::Output {
+        Pos {
+            x: self.x + x,
+            y: self.y + y,
+        }
+    }
+}
+
+impl AddAssign for Pos {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
+impl Sub for Pos {
+    type Output = Pos;
+    fn sub(self, Pos { x, y }: Self) -> Self::Output {
+        Pos {
+            x: self.x.abs_diff(x),
+            y: self.y.abs_diff(y),
+        }
+    }
+}
+
+impl Sub for &Pos {
+    type Output = Pos;
+    fn sub(self, Pos { x, y }: Self) -> Self::Output {
+        Pos {
+            x: self.x.abs_diff(*x),
+            y: self.y.abs_diff(*y),
+        }
+    }
+}
+
+impl SubAssign for Pos {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum Direction {
+    N,
+    E,
+    S,
+    W,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum SubDirection {
+    N,
+    NE,
+    E,
+    SE,
+    S,
+    SW,
+    W,
+    NW,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum Axis {
+    NS,
+    EW,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum Action {
+    /// Indicates a moving piece
+    Move { from: Pos, to: Pos },
+    /// Indicates a piece taking
+    Take { from: Pos, to: Pos },
+    /// Indicates an attacking piece
+    Attack { from: Pos, to: Pos },
+    /// Indicates a piece using its ability
+    Ability { from: Pos, info: Info },
+}
+
+impl Action {
+    pub fn is_move(&self) -> bool {
+        matches!(self, Self::Move { from: _, to: _ })
+    }
+
+    pub fn is_take(&self) -> bool {
+        matches!(self, Self::Take { from: _, to: _ })
+    }
+
+    pub fn is_attack(&self) -> bool {
+        matches!(self, Self::Attack { from: _, to: _ })
+    }
+
+    pub fn is_ability(&self) -> bool {
+        matches!(self, Self::Ability { from: _, info: _ })
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Default, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct Time {
+    pub round: usize,
+    pub turn: usize,
+    pub movement: usize,
+}
+
+impl Time {
+    pub fn new(rounds: usize, turns: usize, movements: usize) -> Self {
+        Self {
+            round: rounds,
+            turn: turns,
+            movement: movements,
+        }
+    }
+
+    pub fn rounds(rounds: usize) -> Self {
+        Self {
+            round: rounds,
+            turn: 0,
+            movement: 0,
+        }
+    }
+
+    pub fn turns(turns: usize) -> Self {
+        Self {
+            round: 0,
+            turn: turns,
+            movement: 0,
+        }
+    }
+
+    pub fn movements(movements: usize) -> Self {
+        Self {
+            round: 0,
+            turn: 0,
+            movement: movements,
+        }
+    }
+
+    pub fn on_round(&mut self) {
+        self.round = self.round.checked_sub(1).unwrap_or_default();
+    }
+
+    pub fn on_turn(&mut self) {
+        self.turn = self.turn.checked_sub(1).unwrap_or_default();
+    }
+
+    pub fn on_movement(&mut self) {
+        self.movement = self.movement.checked_sub(1).unwrap_or_default();
+    }
+}
+
+impl Sub for Time {
+    type Output = Time;
+    fn sub(
+        self,
+        Time {
+            round,
+            turn,
+            movement,
+        }: Self,
+    ) -> Self::Output {
+        Time {
+            round: self.round - round,
+            turn: self.turn - turn,
+            movement: self.movement - movement,
+        }
+    }
+}
+
+impl Sub for &Time {
+    type Output = Time;
+    fn sub(
+        self,
+        Time {
+            round,
+            turn,
+            movement,
+        }: Self,
+    ) -> Self::Output {
+        Time {
+            round: self.round - round,
+            turn: self.turn - turn,
+            movement: self.movement - movement,
+        }
+    }
+}
+
+impl Add for Time {
+    type Output = Time;
+    fn add(
+        self,
+        Time {
+            round,
+            turn,
+            movement,
+        }: Self,
+    ) -> Self::Output {
+        Time {
+            round: self.round + round,
+            turn: self.turn + turn,
+            movement: self.movement + movement,
+        }
+    }
+}
+
+impl Add for &Time {
+    type Output = Time;
+    fn add(
+        self,
+        Time {
+            round,
+            turn,
+            movement,
+        }: Self,
+    ) -> Self::Output {
+        Time {
+            round: self.round + round,
+            turn: self.turn + turn,
+            movement: self.movement + movement,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Color {
+    #[default]
+    White,
+    Black,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum Info {
+    Piece(Piece),
+}
