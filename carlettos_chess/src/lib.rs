@@ -1,6 +1,5 @@
 use std::ops::{Add, AddAssign, Sub};
 
-use board::shape::Square;
 use piece::Piece;
 use serde::{Deserialize, Serialize};
 
@@ -21,6 +20,24 @@ impl From<(usize, usize)> for Pos {
         Self {
             x: value.0,
             y: value.1,
+        }
+    }
+}
+
+impl PartialEq<Option<&Pos>> for Pos {
+    fn eq(&self, other: &Option<&Pos>) -> bool {
+        match other {
+            None => false,
+            Some(other) => other == &self,
+        }
+    }
+}
+
+impl PartialEq<Option<Pos>> for Pos {
+    fn eq(&self, other: &Option<Pos>) -> bool {
+        match other {
+            None => false,
+            Some(other) => other == self,
         }
     }
 }
@@ -295,6 +312,7 @@ pub enum Color {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum Info {
     Piece(Piece),
+    Pos(Pos),
 }
 
 #[cfg(test)]

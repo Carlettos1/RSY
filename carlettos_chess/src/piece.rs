@@ -94,7 +94,7 @@ impl Piece {
                         }
                         (Piece::Pawn(_), Action::Attack { from: _, to: _ }) => false,
                         (Piece::Pawn(_), Action::Ability { from, info }) => {
-                            ability::Pawn::can_ply(&board, &from, &info)
+                            ability::Pawn::can_ply(board, &from, &info)
                         }
                         (Piece::Knight(_), Action::Move { from, to }) => {
                             pattern::knight(&from, &to)
@@ -104,7 +104,7 @@ impl Piece {
                         }
                         (Piece::Knight(_), Action::Attack { from: _, to: _ }) => false,
                         (Piece::Knight(_), Action::Ability { from, info }) => {
-                            ability::Knight::can_ply(&board, &from, &info)
+                            ability::Knight::can_ply(board, &from, &info)
                         }
                     }
             }

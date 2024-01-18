@@ -43,9 +43,6 @@ impl Ability for Knight {
         let e = from.east();
         let w = from.west();
         let w = if let Some(pos) = w { pos } else { return false };
-        match (board.get(&e), board.get(&w)) {
-            (Some(te), Some(tw)) if te.is_empty() && tw.is_empty() => true,
-            _ => false,
-        }
+        matches!((board.get(&e), board.get(&w)), (Some(te), Some(tw)) if te.is_empty() && tw.is_empty())
     }
 }
