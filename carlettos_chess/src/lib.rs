@@ -317,4 +317,53 @@ mod test {
         pos += dpos;
         assert_eq!(pos, Pos::new(4, 6));
     }
+
+    #[test]
+    fn pos_shift() {
+        let pos = Pos::new(1, 2);
+
+        assert_eq!(pos.shift(2, 4), Pos::new(3, 6));
+        assert_eq!(pos.shift(1, 5), Pos::new(2, 7));
+        assert_eq!(pos.shift(2, 1), Pos::new(3, 3));
+        assert_eq!(pos.shift(3, 10), Pos::new(4, 12));
+    }
+
+    #[test]
+    fn pos_checked_shift() {
+        let pos = Pos::new(1, 2);
+
+        assert_eq!(pos.checked_shift(4, 5), Some(Pos::new(5, 7)));
+        assert_eq!(pos.checked_shift(1, 1), Some(Pos::new(2, 3)));
+        assert_eq!(pos.checked_shift(8, 1), Some(Pos::new(9, 3)));
+        assert_eq!(pos.checked_shift(-1, 2), Some(Pos::new(0, 4)));
+        assert_eq!(pos.checked_shift(0, -3), None);
+        assert_eq!(pos.checked_shift(-2, -1), None);
+    }
+
+    #[test]
+    fn pos_edges() {
+        let pos0: Pos = (0, 0).into();
+        let posmax = Pos::new(usize::MAX, usize::MAX);
+
+        assert_eq!(posmax.abs_diff(&pos0), posmax);
+        assert_eq!(pos0.abs_diff(&posmax), posmax);
+        assert_eq!(pos0.abs_diff(&posmax), posmax.abs_diff(&pos0));
+        assert_eq!(posmax.north().east(), pos0);
+
+        assert_eq!(pos0.checked_shift(0, 1), Some(Pos::new(0, 1)));
+        assert_eq!(pos0.checked_shift(1, 0), Some(Pos::new(1, 0)));
+        assert_eq!(pos0.checked_shift(0, -1), None);
+        assert_eq!(pos0.checked_shift(-1, 0), None);
+
+        assert_eq!(posmax.checked_shift(0, 1), None);
+        assert_eq!(posmax.checked_shift(1, 0), None);
+        assert_eq!(
+            posmax.checked_shift(0, -1),
+            Some(Pos::new(usize::MAX, usize::MAX - 1))
+        );
+        assert_eq!(
+            posmax.checked_shift(-1, 0),
+            Some(Pos::new(usize::MAX - 1, usize::MAX))
+        );
+    }
 }
