@@ -213,6 +213,13 @@ pub mod shape {
             &self.anchor + &Pos::new(0, self.height)
         }
 
+        pub fn contains(&self, pos: &Pos) -> bool {
+            pos.x >= self.west()
+                && pos.x < self.east()
+                && pos.y >= self.south()
+                && pos.y < self.north()
+        }
+
         pub fn points_in(&self) -> impl Iterator<Item = Pos> + '_ {
             (self.west()..self.west() + self.width).flat_map(|x| {
                 (self.south()..self.south() + self.height).map(move |y| Pos::new(x, y))
@@ -271,9 +278,9 @@ pub mod shape {
             Shape::new(squares)
         }
 
-        // Check if a point is inside of the entire shape
-        pub fn contains(&self, point: &Pos) -> bool {
-            self.squares.iter().any(|square| point.is_inside(square))
+        // Check if a pos is inside of the entire shape
+        pub fn contains(&self, pos: &Pos) -> bool {
+            self.squares.iter().any(|square| square.contains(pos))
         }
 
         pub fn points_in(&self) -> impl Iterator<Item = Pos> + '_ {

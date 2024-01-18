@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Sub};
 
 use board::shape::Square;
 use piece::Piece;
@@ -29,14 +29,6 @@ impl Pos {
     #[inline(always)]
     pub const fn new(x: usize, y: usize) -> Self {
         Self { x, y }
-    }
-
-    #[inline(always)]
-    pub fn is_inside(&self, square: &Square) -> bool {
-        self.x >= square.west()
-            && self.x < square.east()
-            && self.y >= square.south()
-            && self.y < square.north()
     }
 
     #[inline(always)]
@@ -303,4 +295,26 @@ pub enum Color {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum Info {
     Piece(Piece),
+}
+
+#[cfg(test)]
+mod test {
+    use crate::Pos;
+
+    #[test]
+    fn pos_add() {
+        let pos = Pos::new(1, 2);
+        let dpos = Pos::new(3, 4);
+
+        assert_eq!(pos + dpos, Pos::new(4, 6));
+    }
+
+    #[test]
+    fn pos_add_assign() {
+        let mut pos = Pos::new(1, 2);
+        let dpos = Pos::new(3, 4);
+
+        pos += dpos;
+        assert_eq!(pos, Pos::new(4, 6));
+    }
 }

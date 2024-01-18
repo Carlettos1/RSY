@@ -23,12 +23,12 @@ pub fn pawn_take(_board: &Board, color: &Color, from: &Pos, to: &Pos) -> bool {
 }
 
 pub fn knight(from: &Pos, to: &Pos) -> bool {
-    let Pos { x, y } = from - to;
+    let Pos { x, y } = from.abs_diff(to);
     (x == 2 && y == 1) || (x == 1 && y == 2)
 }
 
 pub fn king(from: &Pos, to: &Pos) -> bool {
-    let Pos { x, y } = from - to;
+    let Pos { x, y } = from.abs_diff(to);
     x < 2 && y < 2
 }
 
