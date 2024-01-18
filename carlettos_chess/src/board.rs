@@ -212,6 +212,12 @@ pub mod shape {
         pub fn nw_point(&self) -> Pos {
             &self.anchor + &Pos::new(0, self.height)
         }
+
+        pub fn points_in(&self) -> impl Iterator<Item = Pos> + '_ {
+            (self.west()..self.west() + self.width).flat_map(|x| {
+                (self.south()..self.south() + self.height).map(move |y| Pos::new(x, y))
+            })
+        }
     }
 
     #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
@@ -269,6 +275,10 @@ pub mod shape {
         pub fn contains(&self, point: &Pos) -> bool {
             self.squares.iter().any(|square| point.is_inside(square))
         }
+
+        pub fn points_in(&self) -> impl Iterator<Item = Pos> + '_ {
+            self.squares.iter().flat_map(|s| s.points_in())
+        }
     }
 }
 
@@ -282,6 +292,42 @@ pub struct Board {
 }
 
 impl Board {
+    pub fn with_shape(shape: Shape) -> Self {
+        Self {
+            tiles: shape.points_in().map(Tile::new).collect(),
+            dead_pieces: Vec::new(),
+            shape,
+            players: vec![
+                Player::new(Color::White, 0, Cards::default()),
+                Player::new(Color::Black, 1, Cards::default()),
+            ],
+            cards: Cards::default(),
+        }
+    }
+
+    pub fn with_default_players(tiles: Vec<Tile>, shape: Shape) -> Self {
+        Self {
+            tiles,
+            dead_pieces: Vec::new(),
+            shape,
+            players: vec![
+                Player::new(Color::White, 0, Cards::default()),
+                Player::new(Color::Black, 1, Cards::default()),
+            ],
+            cards: Cards::default(),
+        }
+    }
+
+    pub fn with_empty_tiles(shape: Shape, players: Vec<Player>) -> Self {
+        Self {
+            tiles: shape.points_in().map(Tile::new).collect(),
+            dead_pieces: Vec::new(),
+            shape,
+            players,
+            cards: Cards::default(),
+        }
+    }
+
     pub fn new(tiles: Vec<Tile>, shape: Shape, players: Vec<Player>) -> Self {
         Self {
             tiles,
@@ -342,6 +388,26 @@ impl Board {
         match self.get(pos) {
             None => false,
             Some(tile) => tile.has_piece(),
+        }
+    }
+
+    pub fn shape(&self) -> &Shape {
+        &self.shape
+    }
+}
+
+impl Default for Board {
+    fn default() -> Self {
+        let shape = Shape::default_chessboard();
+        Self {
+            tiles: shape.points_in().map(Tile::new).collect(),
+            dead_pieces: Vec::new(),
+            shape,
+            players: vec![
+                Player::new(Color::White, 0, Cards::default()),
+                Player::new(Color::Black, 1, Cards::default()),
+            ],
+            cards: Cards::default(),
         }
     }
 }

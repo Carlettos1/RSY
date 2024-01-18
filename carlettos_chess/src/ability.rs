@@ -34,7 +34,7 @@ impl Ability for Knight {
             .unwrap()
             .replace(Piece::pawn(color.clone()));
         board
-            .get_mut(&from.west())
+            .get_mut(&from.west().unwrap())
             .unwrap()
             .replace(Piece::pawn(color));
     }
@@ -42,6 +42,7 @@ impl Ability for Knight {
     fn can_ply(board: &Board, from: &Pos, _info: &Info) -> bool {
         let e = from.east();
         let w = from.west();
+        let w = if let Some(pos) = w { pos } else { return false };
         match (board.get(&e), board.get(&w)) {
             (Some(te), Some(tw)) if te.is_empty() && tw.is_empty() => true,
             _ => false,

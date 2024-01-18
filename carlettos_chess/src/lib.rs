@@ -26,10 +26,12 @@ impl From<(usize, usize)> for Pos {
 }
 
 impl Pos {
+    #[inline(always)]
     pub const fn new(x: usize, y: usize) -> Self {
         Self { x, y }
     }
 
+    #[inline(always)]
     pub fn is_inside(&self, square: &Square) -> bool {
         self.x >= square.west()
             && self.x < square.east()
@@ -37,31 +39,48 @@ impl Pos {
             && self.y < square.north()
     }
 
+    #[inline(always)]
     pub fn north(&self) -> Self {
-        Self {
-            x: self.x,
-            y: self.y + 1,
-        }
+        self.shift(0, 1)
     }
 
+    #[inline(always)]
     pub fn east(&self) -> Self {
+        self.shift(1, 0)
+    }
+
+    #[inline(always)]
+    pub fn south(&self) -> Option<Self> {
+        self.checked_shift(0, -1)
+    }
+
+    #[inline(always)]
+    pub fn west(&self) -> Option<Self> {
+        self.checked_shift(-1, 0)
+    }
+
+    #[inline(always)]
+    pub fn shift(&self, x: usize, y: usize) -> Self {
         Self {
-            x: self.x + 1,
-            y: self.y,
+            x: self.x + x,
+            y: self.y + y,
         }
     }
 
-    pub fn south(&self) -> Self {
-        Self {
-            x: self.x,
-            y: self.y - 1,
+    #[inline(always)]
+    pub fn checked_shift(&self, x: isize, y: isize) -> Option<Self> {
+        let dx = self.x.checked_add_signed(x);
+        let dy = self.y.checked_add_signed(y);
+        match (dx, dy) {
+            (Some(dx), Some(dy)) => Some(Self::new(dx, dy)),
+            _ => None,
         }
     }
 
-    pub fn west(&self) -> Self {
-        Self {
-            x: self.x - 1,
-            y: self.y,
+    pub fn abs_diff(&self, Pos { x, y }: &Pos) -> Pos {
+        Pos {
+            x: self.x.abs_diff(*x),
+            y: self.y.abs_diff(*y),
         }
     }
 }
@@ -90,33 +109,6 @@ impl AddAssign for Pos {
     fn add_assign(&mut self, rhs: Self) {
         self.x += rhs.x;
         self.y += rhs.y;
-    }
-}
-
-impl Sub for Pos {
-    type Output = Pos;
-    fn sub(self, Pos { x, y }: Self) -> Self::Output {
-        Pos {
-            x: self.x.abs_diff(x),
-            y: self.y.abs_diff(y),
-        }
-    }
-}
-
-impl Sub for &Pos {
-    type Output = Pos;
-    fn sub(self, Pos { x, y }: Self) -> Self::Output {
-        Pos {
-            x: self.x.abs_diff(*x),
-            y: self.y.abs_diff(*y),
-        }
-    }
-}
-
-impl SubAssign for Pos {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.x -= rhs.x;
-        self.y -= rhs.y;
     }
 }
 
