@@ -49,7 +49,7 @@ mod test {
                 .get_mut(&pawn_pos)
                 .unwrap()
                 .replace(Piece::pawn(color.clone()));
-            for to in (0..8).flat_map(|i| (0..8).map(move |j| Pos::new(i, j))) {
+            for to in board.shape().points_iter() {
                 let action = Action::Move {
                     from: pawn_pos.clone(),
                     to: to.clone(),
@@ -77,7 +77,7 @@ mod test {
                 .get_mut(&pawn_pos)
                 .unwrap()
                 .replace(Piece::pawn(color.clone()));
-            for to in (0..8).flat_map(|i| (0..8).map(move |j| Pos::new(i, j))) {
+            for to in board.shape().points_iter() {
                 let action = Action::Take {
                     from: pawn_pos.clone(),
                     to: to.clone(),

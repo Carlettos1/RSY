@@ -220,7 +220,7 @@ pub mod shape {
                 && pos.y < self.north()
         }
 
-        pub fn points_in(&self) -> impl Iterator<Item = Pos> + '_ {
+        pub fn points_iter(&self) -> impl Iterator<Item = Pos> + '_ {
             (self.west()..self.west() + self.width).flat_map(|x| {
                 (self.south()..self.south() + self.height).map(move |y| Pos::new(x, y))
             })
@@ -246,7 +246,6 @@ pub mod shape {
             Shape::new(vec![square])
         }
 
-        // Create a cross-like shape
         pub fn cross_shape() -> Self {
             let squares = vec![
                 Square {
@@ -278,13 +277,12 @@ pub mod shape {
             Shape::new(squares)
         }
 
-        // Check if a pos is inside of the entire shape
         pub fn contains(&self, pos: &Pos) -> bool {
             self.squares.iter().any(|square| square.contains(pos))
         }
 
-        pub fn points_in(&self) -> impl Iterator<Item = Pos> + '_ {
-            self.squares.iter().flat_map(|s| s.points_in())
+        pub fn points_iter(&self) -> impl Iterator<Item = Pos> + '_ {
+            self.squares.iter().flat_map(|s| s.points_iter())
         }
     }
 }
@@ -301,7 +299,7 @@ pub struct Board {
 impl Board {
     pub fn with_shape(shape: Shape) -> Self {
         Self {
-            tiles: shape.points_in().map(Tile::new).collect(),
+            tiles: shape.points_iter().map(Tile::new).collect(),
             dead_pieces: Vec::new(),
             shape,
             players: vec![
@@ -327,7 +325,7 @@ impl Board {
 
     pub fn with_empty_tiles(shape: Shape, players: Vec<Player>) -> Self {
         Self {
-            tiles: shape.points_in().map(Tile::new).collect(),
+            tiles: shape.points_iter().map(Tile::new).collect(),
             dead_pieces: Vec::new(),
             shape,
             players,
@@ -407,7 +405,7 @@ impl Default for Board {
     fn default() -> Self {
         let shape = Shape::default_chessboard();
         Self {
-            tiles: shape.points_in().map(Tile::new).collect(),
+            tiles: shape.points_iter().map(Tile::new).collect(),
             dead_pieces: Vec::new(),
             shape,
             players: vec![
