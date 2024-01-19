@@ -30,6 +30,27 @@ pub fn king(from: &Pos, to: &Pos) -> bool {
     x < 2 && y < 2
 }
 
+pub fn bishop(board: &Board, from: &Pos, to: &Pos) -> bool {
+    let Pos { x, y } = from.abs_diff(to);
+    if x != y {
+        return false;
+    }
+
+    let signx = if to.x > from.x { 1isize } else { -1 };
+    let signy = if to.y > from.y { 1isize } else { -1 };
+    for d in 1..x as isize {
+        match board.get(&from.checked_shift(d * signx, d * signy).unwrap()) {
+            None => return false,
+            Some(tile) => {
+                if tile.has_piece() {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
 #[cfg(test)]
 mod test {
     use crate::{board::Board, piece::Piece, Action, Color, Pos};

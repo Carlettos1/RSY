@@ -46,3 +46,30 @@ impl Ability for Knight {
         matches!((board.get(&e), board.get(&w)), (Some(te), Some(tw)) if te.is_empty() && tw.is_empty())
     }
 }
+
+pub struct Bishop;
+
+impl Ability for Bishop {
+    fn ply(board: &mut Board, from: &Pos, info: Info) {
+        if let Info::Direction(direction) = info {
+            let piece = board.get_mut(from).unwrap().remove();
+            board
+                .get_mut(&from.direction_shift(&direction).unwrap())
+                .unwrap()
+                .replace(piece);
+        }
+    }
+
+    fn can_ply(board: &Board, from: &Pos, info: &Info) -> bool {
+        match info {
+            Info::Direction(direction) => match from.direction_shift(direction) {
+                None => false,
+                Some(to) => match board.get(&to) {
+                    None => false,
+                    Some(tile) => tile.is_empty(),
+                },
+            },
+            _ => false,
+        }
+    }
+}

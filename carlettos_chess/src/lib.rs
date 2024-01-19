@@ -86,10 +86,35 @@ impl Pos {
         }
     }
 
+    #[inline(always)]
     pub fn abs_diff(&self, Pos { x, y }: &Pos) -> Pos {
         Pos {
             x: self.x.abs_diff(*x),
             y: self.y.abs_diff(*y),
+        }
+    }
+
+    #[inline(always)]
+    pub fn direction_shift(&self, direction: &Direction) -> Option<Self> {
+        match direction {
+            Direction::N => self.checked_shift(0, 1),
+            Direction::E => self.checked_shift(1, 0),
+            Direction::S => self.checked_shift(0, -1),
+            Direction::W => self.checked_shift(-1, 0),
+        }
+    }
+
+    #[inline(always)]
+    pub fn subdirection_shift(&self, direction: &SubDirection) -> Option<Self> {
+        match direction {
+            SubDirection::N => self.checked_shift(0, 1),
+            SubDirection::NE => self.checked_shift(1, 1),
+            SubDirection::E => self.checked_shift(1, 0),
+            SubDirection::SE => self.checked_shift(1, -1),
+            SubDirection::S => self.checked_shift(0, -1),
+            SubDirection::SW => self.checked_shift(-1, -1),
+            SubDirection::W => self.checked_shift(-1, 0),
+            SubDirection::NW => self.checked_shift(-1, 1),
         }
     }
 }
@@ -312,6 +337,7 @@ pub enum Color {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum Info {
     Piece(Piece),
+    Direction(Direction),
     Pos(Pos),
 }
 

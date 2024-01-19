@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     ability::{self, Ability},
     board::Board,
-    pattern::{self, pawn_take},
+    pattern::{self},
     Action, Color, Time,
 };
 
@@ -60,6 +60,7 @@ pub enum Piece {
     None,
     Pawn(PieceData),
     Knight(PieceData),
+    Bishop(PieceData),
 }
 
 impl Piece {
@@ -68,6 +69,7 @@ impl Piece {
             Piece::None => None,
             Piece::Pawn(data) => Some(&data.color),
             Piece::Knight(data) => Some(&data.color),
+            Piece::Bishop(data) => Some(&data.color),
         }
     }
 
@@ -76,6 +78,7 @@ impl Piece {
             Piece::None => None,
             Piece::Pawn(data) => Some(data),
             Piece::Knight(data) => Some(data),
+            Piece::Bishop(data) => Some(data),
         }
     }
 
@@ -90,7 +93,7 @@ impl Piece {
                             pattern::pawn_move(board, &data.color, &from, &to)
                         }
                         (Piece::Pawn(data), Action::Take { from, to }) => {
-                            pawn_take(board, &data.color, &from, &to)
+                            pattern::pawn_take(board, &data.color, &from, &to)
                         }
                         (Piece::Pawn(_), Action::Attack { from: _, to: _ }) => false,
                         (Piece::Pawn(_), Action::Ability { from, info }) => {
@@ -105,6 +108,16 @@ impl Piece {
                         (Piece::Knight(_), Action::Attack { from: _, to: _ }) => false,
                         (Piece::Knight(_), Action::Ability { from, info }) => {
                             ability::Knight::can_ply(board, &from, &info)
+                        }
+                        (Piece::Bishop(_), Action::Move { from, to }) => {
+                            pattern::bishop(board, &from, &to)
+                        }
+                        (Piece::Bishop(_), Action::Take { from, to }) => {
+                            pattern::bishop(board, &from, &to)
+                        }
+                        (Piece::Bishop(_), Action::Attack { from: _, to: _ }) => false,
+                        (Piece::Bishop(_), Action::Ability { from, info }) => {
+                            ability::Bishop::can_ply(board, &from, &info)
                         }
                     }
             }
