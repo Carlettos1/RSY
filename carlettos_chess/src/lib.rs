@@ -9,6 +9,32 @@ pub mod card;
 pub mod pattern;
 pub mod piece;
 
+/// Represents a position on a chessboard.
+///
+/// The `Pos` struct provides methods for manipulating and calculating positions on a chessboard.
+/// Positions are represented by their x and y coordinates, where (0, 0) represents the bottom-left corner of the board.
+///
+/// # Examples
+///
+/// ```
+/// use carlettos_chess::Pos;
+///
+/// let pos = Pos::new(3, 4);
+/// assert_eq!(pos.x, 3);
+/// assert_eq!(pos.y, 4);
+///
+/// let north_pos = pos.north();
+/// assert_eq!(north_pos.unwrap().y, 5);
+///
+/// let east_pos = pos.east();
+/// assert_eq!(east_pos.unwrap().x, 4);
+///
+/// let south_pos = pos.south();
+/// assert_eq!(south_pos.unwrap().y, 3);
+///
+/// let west_pos = pos.west();
+/// assert_eq!(west_pos.unwrap().x, 2);
+/// ```
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Pos {
     pub x: usize,
@@ -43,41 +69,118 @@ impl PartialEq<Option<Pos>> for Pos {
 }
 
 impl Pos {
+    /// Creates a new `Pos` with the specified x and y coordinates.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - The x coordinate of the position.
+    /// * `y` - The y coordinate of the position.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::Pos;
+    ///
+    /// let pos = Pos::new(3, 4);
+    /// assert_eq!(pos.x, 3);
+    /// assert_eq!(pos.y, 4);
+    /// ```
     #[inline(always)]
     pub const fn new(x: usize, y: usize) -> Self {
         Self { x, y }
     }
 
+    /// Returns the position to the north of the current position.
+    ///
+    /// If the resulting position is greater than usize::MAX, `None` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::Pos;
+    ///
+    /// let pos = Pos::new(3, 4);
+    /// let north_pos = pos.north();
+    /// assert_eq!(north_pos.unwrap().y, 5);
+    /// ```
     #[inline(always)]
-    pub fn north(&self) -> Self {
+    pub fn north(&self) -> Option<Self> {
         self.shift(0, 1)
     }
 
+    /// Returns the position to the east of the current position.
+    ///
+    /// If the resulting position is greater than usize::MAX, `None` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::Pos;
+    ///
+    /// let pos = Pos::new(3, 4);
+    /// let east_pos = pos.east();
+    /// assert_eq!(east_pos.unwrap().x, 4);
+    /// ```
     #[inline(always)]
-    pub fn east(&self) -> Self {
+    pub fn east(&self) -> Option<Self> {
         self.shift(1, 0)
     }
 
+    /// Returns the position to the south of the current position.
+    ///
+    /// If the resulting position is smaller than 0, `None` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::Pos;
+    ///
+    /// let pos = Pos::new(3, 4);
+    /// let south_pos = pos.south();
+    /// assert_eq!(south_pos.unwrap().y, 3);
+    /// ```
     #[inline(always)]
     pub fn south(&self) -> Option<Self> {
-        self.checked_shift(0, -1)
+        self.shift(0, -1)
     }
 
+    /// Returns the position to the west of the current position.
+    ///
+    /// If the resulting position is smaller than 0, `None` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::Pos;
+    ///
+    /// let pos = Pos::new(3, 4);
+    /// let west_pos = pos.west();
+    /// assert_eq!(west_pos.unwrap().x, 2);
+    /// ```
     #[inline(always)]
     pub fn west(&self) -> Option<Self> {
-        self.checked_shift(-1, 0)
+        self.shift(-1, 0)
     }
 
+    /// Returns a new position that is shifted by the specified x and y offsets, if the resulting position is within `usize::MIN` and `usize::MAX`.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - The x offset to apply to the current position.
+    /// * `y` - The y offset to apply to the current position.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::Pos;
+    ///
+    /// let pos = Pos::new(3, 4);
+    /// let shifted_pos = pos.shift(2, -1);
+    /// assert_eq!(shifted_pos.as_ref().unwrap().x, 5);
+    /// assert_eq!(shifted_pos.as_ref().unwrap().y, 3);
+    /// ```
     #[inline(always)]
-    pub fn shift(&self, x: usize, y: usize) -> Self {
-        Self {
-            x: self.x + x,
-            y: self.y + y,
-        }
-    }
-
-    #[inline(always)]
-    pub fn checked_shift(&self, x: isize, y: isize) -> Option<Self> {
+    pub fn shift(&self, x: isize, y: isize) -> Option<Self> {
         let dx = self.x.checked_add_signed(x);
         let dy = self.y.checked_add_signed(y);
         match (dx, dy) {
@@ -86,6 +189,23 @@ impl Pos {
         }
     }
 
+    /// Returns the absolute difference between the current position and the specified position.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` - The other position to calculate the absolute difference with.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::Pos;
+    ///
+    /// let pos1 = Pos::new(3, 4);
+    /// let pos2 = Pos::new(6, 2);
+    /// let diff = pos1.abs_diff(&pos2);
+    /// assert_eq!(diff.x, 3);
+    /// assert_eq!(diff.y, 2);
+    /// ```
     #[inline(always)]
     pub fn abs_diff(&self, Pos { x, y }: &Pos) -> Pos {
         Pos {
@@ -94,28 +214,46 @@ impl Pos {
         }
     }
 
+    /// Returns the position obtained by shifting the current position in the specified direction.
+    ///
+    /// # Arguments
+    ///
+    /// * `direction` - The direction in which to shift the position.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::{Pos, Direction};
+    ///
+    /// let pos = Pos::new(3, 4);
+    /// let north_pos = pos.direction_shift(&Direction::N);
+    /// assert_eq!(north_pos.unwrap().y, 5);
+    /// ```
     #[inline(always)]
     pub fn direction_shift(&self, direction: &Direction) -> Option<Self> {
-        match direction {
-            Direction::N => self.checked_shift(0, 1),
-            Direction::E => self.checked_shift(1, 0),
-            Direction::S => self.checked_shift(0, -1),
-            Direction::W => self.checked_shift(-1, 0),
-        }
+        let (dx, dy) = direction.into();
+        self.shift(dx, dy)
     }
 
+    /// Returns the position obtained by shifting the current position in the specified subdirection.
+    ///
+    /// # Arguments
+    ///
+    /// * `subdirection` - The subdirection in which to shift the position.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use carlettos_chess::{Pos, SubDirection};
+    ///
+    /// let pos = Pos::new(3, 4);
+    /// let north_pos = pos.subdirection_shift(&SubDirection::N);
+    /// assert_eq!(north_pos.unwrap().y, 5);
+    /// ```
     #[inline(always)]
-    pub fn subdirection_shift(&self, direction: &SubDirection) -> Option<Self> {
-        match direction {
-            SubDirection::N => self.checked_shift(0, 1),
-            SubDirection::NE => self.checked_shift(1, 1),
-            SubDirection::E => self.checked_shift(1, 0),
-            SubDirection::SE => self.checked_shift(1, -1),
-            SubDirection::S => self.checked_shift(0, -1),
-            SubDirection::SW => self.checked_shift(-1, -1),
-            SubDirection::W => self.checked_shift(-1, 0),
-            SubDirection::NW => self.checked_shift(-1, 1),
-        }
+    pub fn subdirection_shift(&self, subdirection: &SubDirection) -> Option<Self> {
+        let (dx, dy) = subdirection.into();
+        self.shift(dx, dy)
     }
 }
 
@@ -154,6 +292,38 @@ pub enum Direction {
     W,
 }
 
+impl From<&Direction> for (isize, isize) {
+    fn from(value: &Direction) -> Self {
+        match value {
+            Direction::N => (0, 1),
+            Direction::E => (1, 0),
+            Direction::S => (0, -1),
+            Direction::W => (-1, 0),
+        }
+    }
+}
+
+impl Direction {
+    pub fn is_axis(&self, axis: &Axis) -> bool {
+        matches!(
+            (self, axis),
+            (Direction::N, Axis::NS)
+                | (Direction::S, Axis::NS)
+                | (Direction::E, Axis::EW)
+                | (Direction::W, Axis::EW)
+        )
+    }
+
+    pub fn into_subdirection(&self) -> SubDirection {
+        match self {
+            Direction::N => SubDirection::N,
+            Direction::E => SubDirection::E,
+            Direction::S => SubDirection::S,
+            Direction::W => SubDirection::W,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum SubDirection {
     N,
@@ -164,6 +334,51 @@ pub enum SubDirection {
     SW,
     W,
     NW,
+}
+
+impl From<&SubDirection> for (isize, isize) {
+    fn from(value: &SubDirection) -> Self {
+        match value {
+            SubDirection::N => (0, 1),
+            SubDirection::NE => (1, 1),
+            SubDirection::E => (1, 0),
+            SubDirection::SE => (1, -1),
+            SubDirection::S => (0, -1),
+            SubDirection::SW => (-1, -1),
+            SubDirection::W => (-1, 0),
+            SubDirection::NW => (-1, 1),
+        }
+    }
+}
+
+impl SubDirection {
+    pub fn is_direction(&self, direction: &Direction) -> bool {
+        matches!(
+            (self, direction),
+            (SubDirection::N, Direction::N)
+                | (SubDirection::NE, Direction::N)
+                | (SubDirection::NE, Direction::E)
+                | (SubDirection::E, Direction::E)
+                | (SubDirection::SE, Direction::E)
+                | (SubDirection::SE, Direction::S)
+                | (SubDirection::S, Direction::S)
+                | (SubDirection::SW, Direction::S)
+                | (SubDirection::SW, Direction::W)
+                | (SubDirection::W, Direction::W)
+                | (SubDirection::NW, Direction::W)
+                | (SubDirection::NW, Direction::N)
+        )
+    }
+
+    pub fn into_direction(&self) -> Option<Direction> {
+        match self {
+            SubDirection::N => Some(Direction::N),
+            SubDirection::E => Some(Direction::E),
+            SubDirection::S => Some(Direction::S),
+            SubDirection::W => Some(Direction::W),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -366,22 +581,12 @@ mod test {
     fn pos_shift() {
         let pos = Pos::new(1, 2);
 
-        assert_eq!(pos.shift(2, 4), Pos::new(3, 6));
-        assert_eq!(pos.shift(1, 5), Pos::new(2, 7));
-        assert_eq!(pos.shift(2, 1), Pos::new(3, 3));
-        assert_eq!(pos.shift(3, 10), Pos::new(4, 12));
-    }
-
-    #[test]
-    fn pos_checked_shift() {
-        let pos = Pos::new(1, 2);
-
-        assert_eq!(pos.checked_shift(4, 5), Some(Pos::new(5, 7)));
-        assert_eq!(pos.checked_shift(1, 1), Some(Pos::new(2, 3)));
-        assert_eq!(pos.checked_shift(8, 1), Some(Pos::new(9, 3)));
-        assert_eq!(pos.checked_shift(-1, 2), Some(Pos::new(0, 4)));
-        assert_eq!(pos.checked_shift(0, -3), None);
-        assert_eq!(pos.checked_shift(-2, -1), None);
+        assert_eq!(pos.shift(4, 5), Some(Pos::new(5, 7)));
+        assert_eq!(pos.shift(1, 1), Some(Pos::new(2, 3)));
+        assert_eq!(pos.shift(8, 1), Some(Pos::new(9, 3)));
+        assert_eq!(pos.shift(-1, 2), Some(Pos::new(0, 4)));
+        assert_eq!(pos.shift(0, -3), None);
+        assert_eq!(pos.shift(-2, -1), None);
     }
 
     #[test]
@@ -392,21 +597,21 @@ mod test {
         assert_eq!(posmax.abs_diff(&pos0), posmax);
         assert_eq!(pos0.abs_diff(&posmax), posmax);
         assert_eq!(pos0.abs_diff(&posmax), posmax.abs_diff(&pos0));
-        assert_eq!(posmax.north().east(), pos0);
+        assert_eq!(posmax.north(), None);
 
-        assert_eq!(pos0.checked_shift(0, 1), Some(Pos::new(0, 1)));
-        assert_eq!(pos0.checked_shift(1, 0), Some(Pos::new(1, 0)));
-        assert_eq!(pos0.checked_shift(0, -1), None);
-        assert_eq!(pos0.checked_shift(-1, 0), None);
+        assert_eq!(pos0.shift(0, 1), Some(Pos::new(0, 1)));
+        assert_eq!(pos0.shift(1, 0), Some(Pos::new(1, 0)));
+        assert_eq!(pos0.shift(0, -1), None);
+        assert_eq!(pos0.shift(-1, 0), None);
 
-        assert_eq!(posmax.checked_shift(0, 1), None);
-        assert_eq!(posmax.checked_shift(1, 0), None);
+        assert_eq!(posmax.shift(0, 1), None);
+        assert_eq!(posmax.shift(1, 0), None);
         assert_eq!(
-            posmax.checked_shift(0, -1),
+            posmax.shift(0, -1),
             Some(Pos::new(usize::MAX, usize::MAX - 1))
         );
         assert_eq!(
-            posmax.checked_shift(-1, 0),
+            posmax.shift(-1, 0),
             Some(Pos::new(usize::MAX - 1, usize::MAX))
         );
     }

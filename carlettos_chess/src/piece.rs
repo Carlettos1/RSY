@@ -61,6 +61,9 @@ pub enum Piece {
     Pawn(PieceData),
     Knight(PieceData),
     Bishop(PieceData),
+    Rook(PieceData),
+    Queen(PieceData),
+    King(PieceData),
 }
 
 impl Piece {
@@ -70,6 +73,9 @@ impl Piece {
             Piece::Pawn(data) => Some(&data.color),
             Piece::Knight(data) => Some(&data.color),
             Piece::Bishop(data) => Some(&data.color),
+            Piece::Rook(data) => Some(&data.color),
+            Piece::Queen(data) => Some(&data.color),
+            Piece::King(data) => Some(&data.color),
         }
     }
 
@@ -79,6 +85,9 @@ impl Piece {
             Piece::Pawn(data) => Some(data),
             Piece::Knight(data) => Some(data),
             Piece::Bishop(data) => Some(data),
+            Piece::Rook(data) => Some(data),
+            Piece::Queen(data) => Some(data),
+            Piece::King(data) => Some(data),
         }
     }
 
@@ -97,7 +106,7 @@ impl Piece {
                         }
                         (Piece::Pawn(_), Action::Attack { from: _, to: _ }) => false,
                         (Piece::Pawn(_), Action::Ability { from, info }) => {
-                            ability::Pawn::can_ply(board, &from, &info)
+                            ability::Pawn::can_use(board, &from, &info)
                         }
                         (Piece::Knight(_), Action::Move { from, to }) => {
                             pattern::knight(&from, &to)
@@ -107,7 +116,7 @@ impl Piece {
                         }
                         (Piece::Knight(_), Action::Attack { from: _, to: _ }) => false,
                         (Piece::Knight(_), Action::Ability { from, info }) => {
-                            ability::Knight::can_ply(board, &from, &info)
+                            ability::Knight::can_use(board, &from, &info)
                         }
                         (Piece::Bishop(_), Action::Move { from, to }) => {
                             pattern::bishop(board, &from, &to)
@@ -117,7 +126,33 @@ impl Piece {
                         }
                         (Piece::Bishop(_), Action::Attack { from: _, to: _ }) => false,
                         (Piece::Bishop(_), Action::Ability { from, info }) => {
-                            ability::Bishop::can_ply(board, &from, &info)
+                            ability::Bishop::can_use(board, &from, &info)
+                        }
+                        (Piece::Rook(_), Action::Move { from, to }) => {
+                            pattern::rook(board, &from, &to)
+                        }
+                        (Piece::Rook(_), Action::Take { from, to }) => {
+                            pattern::rook(board, &from, &to)
+                        }
+                        (Piece::Rook(_), Action::Attack { from: _, to: _ }) => false,
+                        (Piece::Rook(_), Action::Ability { from, info }) => {
+                            ability::Rook::can_use(board, &from, &info)
+                        }
+                        (Piece::Queen(_), Action::Move { from, to }) => {
+                            pattern::queen(board, &from, &to)
+                        }
+                        (Piece::Queen(_), Action::Take { from, to }) => {
+                            pattern::queen(board, &from, &to)
+                        }
+                        (Piece::Queen(_), Action::Attack { from: _, to: _ }) => false,
+                        (Piece::Queen(_), Action::Ability { from, info }) => {
+                            ability::Queen::can_use(board, &from, &info)
+                        }
+                        (Piece::King(_), Action::Move { from, to }) => pattern::king(&from, &to),
+                        (Piece::King(_), Action::Take { from, to }) => pattern::king(&from, &to),
+                        (Piece::King(_), Action::Attack { from: _, to: _ }) => false,
+                        (Piece::King(_), Action::Ability { from, info }) => {
+                            ability::King::can_use(board, &from, &info)
                         }
                     }
             }
@@ -133,6 +168,22 @@ impl Piece {
 
     pub fn knight(color: Color) -> Self {
         Self::Knight(PieceData::new(color, vec![Type::Biologic]))
+    }
+
+    pub fn bishop(color: Color) -> Self {
+        Self::Bishop(PieceData::new(color, vec![Type::Biologic]))
+    }
+
+    pub fn rook(color: Color) -> Self {
+        Self::Rook(PieceData::new(color, vec![Type::Biologic]))
+    }
+
+    pub fn queen(color: Color) -> Self {
+        Self::Queen(PieceData::new(color, vec![Type::Biologic]))
+    }
+
+    pub fn king(color: Color) -> Self {
+        Self::King(PieceData::new(color, vec![Type::Biologic]))
     }
 }
 

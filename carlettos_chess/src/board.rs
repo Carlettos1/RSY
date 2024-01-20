@@ -168,6 +168,34 @@ impl Tile {
     pub fn remove(&mut self) -> Piece {
         self.replace(Piece::None)
     }
+
+    pub fn pos(&self) -> &Pos {
+        &self.pos
+    }
+
+    pub fn has_pawn(&self) -> bool {
+        matches!(self.piece, Piece::Pawn(_))
+    }
+
+    pub fn has_knight(&self) -> bool {
+        matches!(self.piece, Piece::Knight(_))
+    }
+
+    pub fn has_bishop(&self) -> bool {
+        matches!(self.piece, Piece::Bishop(_))
+    }
+
+    pub fn has_rook(&self) -> bool {
+        matches!(self.piece, Piece::Rook(_))
+    }
+
+    pub fn has_queen(&self) -> bool {
+        matches!(self.piece, Piece::Queen(_))
+    }
+
+    pub fn has_king(&self) -> bool {
+        matches!(self.piece, Piece::King(_))
+    }
 }
 
 pub mod shape {
@@ -370,6 +398,14 @@ impl Board {
         }
     }
 
+    pub fn get_nearby_tiles(&self, pos: &Pos) -> Vec<&Tile> {
+        vec![pos.north(), pos.east(), pos.south(), pos.west()]
+            .into_iter()
+            .flatten()
+            .filter_map(|p| self.get(&p))
+            .collect()
+    }
+
     pub fn contains(&self, pos: &Pos) -> bool {
         self.shape.contains(pos)
     }
@@ -399,6 +435,74 @@ impl Board {
     pub fn shape(&self) -> &Shape {
         &self.shape
     }
+
+    pub fn tile_ray_cast<F: Fn(&Tile) -> bool>(
+        &self,
+        from: &Pos,
+        len: Option<usize>,
+        shift: &(isize, isize),
+        stop_at: F,
+    ) -> TileRayCast {
+        if !self.contains(from) {
+            return TileRayCast(Vec::with_capacity(0));
+        }
+        let next = from.shift(shift.0, shift.1);
+        let mut next = match next {
+            None => return TileRayCast(Vec::with_capacity(0)),
+            Some(pos) => pos,
+        };
+        let mut tiles = Vec::with_capacity(len.unwrap_or(10));
+        while self.contains(&next) && !stop_at(self.get(&next).unwrap()) {
+            tiles.push(self.get(&next).unwrap());
+            next = match next.shift(shift.0, shift.1) {
+                None => break,
+                Some(pos) => pos,
+            };
+            match len {
+                None => (),
+                Some(len) => {
+                    if tiles.len() >= len {
+                        break;
+                    }
+                }
+            }
+        }
+        TileRayCast(tiles)
+    }
+
+    pub fn tile_ray_cast_empty(
+        &self,
+        from: &Pos,
+        len: Option<usize>,
+        shift: &(isize, isize),
+    ) -> TileRayCast {
+        self.tile_ray_cast(from, len, shift, |t| t.has_piece())
+    }
+
+    pub fn pos_ray_cast<F: Fn(&Tile) -> bool>(
+        &self,
+        from: &Pos,
+        len: Option<usize>,
+        shift: &(isize, isize),
+        stop_at: F,
+    ) -> PosRayCast {
+        PosRayCast(
+            self.tile_ray_cast(from, len, shift, stop_at)
+                .0
+                .iter()
+                .map(|t| t.pos.clone())
+                .collect(),
+        )
+    }
+
+    pub fn pos_ray_cast_empty(
+        &self,
+        from: &Pos,
+        len: Option<usize>,
+        shift: &(isize, isize),
+    ) -> PosRayCast {
+        self.pos_ray_cast(from, len, shift, |t| t.has_piece())
+    }
 }
 
 impl Default for Board {
@@ -414,5 +518,27 @@ impl Default for Board {
             ],
             cards: Cards::default(),
         }
+    }
+}
+
+pub struct TileRayCast<'a>(pub Vec<&'a Tile>);
+
+pub struct PosRayCast(pub Vec<Pos>);
+
+impl PosRayCast {
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn first(&self) -> Option<&Pos> {
+        self.0.first()
+    }
+
+    pub fn last(&self) -> Option<&Pos> {
+        self.0.last()
     }
 }
