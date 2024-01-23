@@ -1,8 +1,11 @@
+use carlettos_chess::Pos;
 use chess_api::{Board, Color};
 use yew::UseReducerHandle;
 
 use crate::{
-    state::{ChessAction, ChessState, TaskAction, TaskState},
+    state::{
+        CarlettosChessAction, CarlettosChessState, ChessAction, ChessState, TaskAction, TaskState,
+    },
     sub_api,
 };
 
@@ -43,6 +46,26 @@ impl ChessController {
 
     pub fn winner(&self) -> &Option<Color> {
         &self.state.winner
+    }
+}
+
+pub struct CarlettosChessController {
+    state: UseReducerHandle<CarlettosChessState>,
+}
+
+impl CarlettosChessController {
+    pub fn new(state: UseReducerHandle<CarlettosChessState>) -> CarlettosChessController {
+        CarlettosChessController { state }
+    }
+
+    pub fn start(&self) {
+        let chess = self.state.clone();
+        chess.dispatch(CarlettosChessAction::Start);
+    }
+
+    pub fn on_click(&self, from: Pos) {
+        let chess = self.state.clone();
+        chess.dispatch(CarlettosChessAction::OnClick(from));
     }
 }
 
