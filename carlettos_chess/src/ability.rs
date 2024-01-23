@@ -1,13 +1,19 @@
 use core::panic;
 
 use crate::{
-    board::{Board, Tile},
+    board::{Board, Mana, Tile},
     pattern,
     piece::Piece,
-    Color, Direction, Info, Pos,
+    Color, Direction, Info, Pos, Time,
 };
 
+pub struct AbilityData {
+    pub cooldown: Time,
+    pub cost: Mana,
+}
+
 pub trait Ability {
+    fn data(&self) -> AbilityData;
     fn r#use(board: &mut Board, from: &Pos, info: Info);
     fn can_use(board: &Board, from: &Pos, info: &Info) -> bool;
 }
@@ -15,6 +21,13 @@ pub trait Ability {
 pub struct Pawn;
 
 impl Ability for Pawn {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::default(),
+            cost: Mana::default(),
+        }
+    }
+
     fn r#use(board: &mut Board, from: &Pos, info: Info) {
         match info {
             Info::Piece(piece) => drop(board.get_mut(from).unwrap().replace(piece)),
@@ -34,6 +47,13 @@ impl Ability for Pawn {
 pub struct Knight;
 
 impl Ability for Knight {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(10),
+            cost: Mana(1),
+        }
+    }
+
     fn r#use(board: &mut Board, from: &Pos, _info: Info) {
         let color = board.get(from).unwrap().get_color().unwrap().clone();
         board
@@ -58,6 +78,13 @@ impl Ability for Knight {
 pub struct Bishop;
 
 impl Ability for Bishop {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(2),
+            cost: Mana(0),
+        }
+    }
+
     fn r#use(board: &mut Board, from: &Pos, info: Info) {
         if let Info::Direction(direction) = info {
             let piece = board.get_mut(from).unwrap().remove();
@@ -85,6 +112,13 @@ impl Ability for Bishop {
 pub struct Rook;
 
 impl Ability for Rook {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(10),
+            cost: Mana(0),
+        }
+    }
+
     fn r#use(board: &mut Board, from: &Pos, info: Info) {
         // The rook's ability is to "throw" all nearby rooks in one direction.
         // By throwing, we mean that the rook is moved in that direction until it hits a piece.
@@ -149,6 +183,12 @@ impl Ability for Rook {
 pub struct Queen;
 
 impl Ability for Queen {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(5),
+            cost: Mana(0),
+        }
+    }
     fn r#use(board: &mut Board, from: &Pos, info: Info) {
         if let Info::Pos(pos) = info {
             let piece = board.get_mut(from).unwrap().remove();
@@ -166,6 +206,13 @@ impl Ability for Queen {
 pub struct King;
 
 impl Ability for King {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::default(),
+            cost: Mana(2),
+        }
+    }
+
     fn r#use(board: &mut Board, from: &Pos, info: Info) {
         if let Info::Pos(to) = info {
             let piece = board.get_mut(from).unwrap().remove();
