@@ -480,6 +480,7 @@ dependencies = [
 name = "carlettos_web"
 version = "0.1.0"
 dependencies = [
+ "carlettos_chess",
  "chess_api",
  "chrono",
  "gloo 0.11.0",
