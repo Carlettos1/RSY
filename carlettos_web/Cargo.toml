@@ -17,3 +17,6 @@ rand = "0.8"
 gloo = "0.11"
 log = "0.4"
 wasm-logger = "0.2"
+
+carlettos_chess = { path = "../carlettos_chess" }
+
