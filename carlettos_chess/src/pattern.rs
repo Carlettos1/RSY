@@ -38,17 +38,10 @@ pub fn bishop(board: &Board, from: &Pos, to: &Pos) -> bool {
 
     let signx = if to.x > from.x { 1isize } else { -1 };
     let signy = if to.y > from.y { 1isize } else { -1 };
-    for d in 1..x as isize {
-        match board.get(&from.shift(d * signx, d * signy).unwrap()) {
-            None => return false,
-            Some(tile) => {
-                if tile.has_piece() {
-                    return false;
-                }
-            }
-        }
-    }
-    true
+    board
+        .pos_ray_cast_empty(from, None, &(signx, signy))
+        .0
+        .contains(to)
 }
 
 pub fn rook(board: &Board, from: &Pos, to: &Pos) -> bool {
