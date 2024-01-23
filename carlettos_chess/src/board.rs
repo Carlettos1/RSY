@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{card::Cards, piece::Piece, Color, Pos};
+use crate::{card::Cards, piece::Piece, Action, Color, Pos};
 
 use self::shape::Shape;
 
@@ -312,6 +312,14 @@ pub mod shape {
         pub fn points_iter(&self) -> impl Iterator<Item = Pos> + '_ {
             self.squares.iter().flat_map(|s| s.points_iter())
         }
+
+        pub fn height(&self) -> usize {
+            self.squares
+                .iter()
+                .map(|s| s.north())
+                .max()
+                .unwrap_or_default()
+        }
     }
 }
 
@@ -325,6 +333,139 @@ pub struct Board {
 }
 
 impl Board {
+    pub fn default_chessboard() -> Self {
+        let mut default = Self::default();
+        default
+            .get_mut(&Pos::new(0, 0))
+            .unwrap()
+            .replace(Piece::rook(Color::White));
+        default
+            .get_mut(&Pos::new(1, 0))
+            .unwrap()
+            .replace(Piece::knight(Color::White));
+        default
+            .get_mut(&Pos::new(2, 0))
+            .unwrap()
+            .replace(Piece::bishop(Color::White));
+        default
+            .get_mut(&Pos::new(3, 0))
+            .unwrap()
+            .replace(Piece::queen(Color::White));
+        default
+            .get_mut(&Pos::new(4, 0))
+            .unwrap()
+            .replace(Piece::king(Color::White));
+        default
+            .get_mut(&Pos::new(5, 0))
+            .unwrap()
+            .replace(Piece::bishop(Color::White));
+        default
+            .get_mut(&Pos::new(6, 0))
+            .unwrap()
+            .replace(Piece::knight(Color::White));
+        default
+            .get_mut(&Pos::new(7, 0))
+            .unwrap()
+            .replace(Piece::rook(Color::White));
+        default
+            .get_mut(&Pos::new(0, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        default
+            .get_mut(&Pos::new(1, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        default
+            .get_mut(&Pos::new(2, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        default
+            .get_mut(&Pos::new(3, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        default
+            .get_mut(&Pos::new(4, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        default
+            .get_mut(&Pos::new(5, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        default
+            .get_mut(&Pos::new(6, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        default
+            .get_mut(&Pos::new(7, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        default
+            .get_mut(&Pos::new(0, 6))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        default
+            .get_mut(&Pos::new(1, 6))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        default
+            .get_mut(&Pos::new(2, 6))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        default
+            .get_mut(&Pos::new(3, 6))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        default
+            .get_mut(&Pos::new(4, 6))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        default
+            .get_mut(&Pos::new(5, 6))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        default
+            .get_mut(&Pos::new(6, 6))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        default
+            .get_mut(&Pos::new(7, 6))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        default
+            .get_mut(&Pos::new(0, 7))
+            .unwrap()
+            .replace(Piece::rook(Color::Black));
+        default
+            .get_mut(&Pos::new(1, 7))
+            .unwrap()
+            .replace(Piece::knight(Color::Black));
+        default
+            .get_mut(&Pos::new(2, 7))
+            .unwrap()
+            .replace(Piece::bishop(Color::Black));
+        default
+            .get_mut(&Pos::new(3, 7))
+            .unwrap()
+            .replace(Piece::queen(Color::Black));
+        default
+            .get_mut(&Pos::new(4, 7))
+            .unwrap()
+            .replace(Piece::king(Color::Black));
+        default
+            .get_mut(&Pos::new(5, 7))
+            .unwrap()
+            .replace(Piece::bishop(Color::Black));
+        default
+            .get_mut(&Pos::new(6, 7))
+            .unwrap()
+            .replace(Piece::knight(Color::Black));
+        default
+            .get_mut(&Pos::new(7, 7))
+            .unwrap()
+            .replace(Piece::rook(Color::Black));
+        default
+    }
+
     pub fn with_shape(shape: Shape) -> Self {
         Self {
             tiles: shape.points_iter().map(Tile::new).collect(),
@@ -502,6 +643,41 @@ impl Board {
         shift: &(isize, isize),
     ) -> PosRayCast {
         self.pos_ray_cast(from, len, shift, |t| t.has_piece())
+    }
+
+    ///
+    /// Returns the tiles in the same row as the given position.
+    pub fn row_iter(&self, row: usize) -> impl Iterator<Item = &Tile> {
+        self.tiles.iter().filter(move |t| t.pos.y == row)
+    }
+
+    pub fn height(&self) -> usize {
+        self.shape.height()
+    }
+
+    pub fn move_piece(&mut self, from: &Pos, to: &Pos) {
+        let piece = self.get_mut(from).unwrap().remove();
+        self.get_mut(to).unwrap().replace(piece);
+    }
+
+    pub fn take_piece(&mut self, from: &Pos, to: &Pos) {
+        let piece = self.get_mut(from).unwrap().remove();
+        let dead = self.get_mut(to).unwrap().replace(piece);
+        self.dead_pieces.push(dead);
+    }
+
+    pub fn attack_piece(&mut self, _from: &Pos, to: &Pos) {
+        let dead = self.get_mut(to).unwrap().remove();
+        self.dead_pieces.push(dead);
+    }
+
+    pub fn make(&mut self, action: Action) {
+        match action {
+            Action::Move { from, to } => self.move_piece(&from, &to),
+            Action::Take { from, to } => self.take_piece(&from, &to),
+            Action::Attack { from, to } => self.attack_piece(&from, &to),
+            Action::Ability { from, info } => Piece::ability(self, from, info),
+        }
     }
 }
 
