@@ -8,6 +8,7 @@ pub mod board;
 pub mod card;
 pub mod pattern;
 pub mod piece;
+pub mod prelude;
 
 /// Represents a position on a chessboard.
 ///
