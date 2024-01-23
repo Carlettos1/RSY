@@ -101,7 +101,7 @@ async fn connect(db: &DB) -> Result<(), prelude::Error> {
 #[launch]
 async fn rocket() -> _ {
     let db = Arc::new(
-        surrealdb::engine::any::connect("ws://0.0.0.0:8000")
+        surrealdb::engine::any::connect("ws://localhost:8000")
             .await
             .unwrap(),
     );
