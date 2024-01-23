@@ -7,12 +7,14 @@ mod state;
 mod sub_api;
 
 mod pages {
+    mod carlettos_chess;
     mod chess;
     mod game_of_life;
     mod home;
     mod page_not_found;
     mod todo_app;
 
+    pub use carlettos_chess::*;
     pub use chess::*;
     pub use game_of_life::*;
     pub use home::*;
@@ -48,6 +50,8 @@ pub enum Route {
     TodoApp,
     #[at("/")]
     Home,
+    #[at("/carlettos_chess")]
+    CarlettosChess,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -123,6 +127,9 @@ impl App {
                         <Link<Route> classes={classes!("navbar-item")} to={Route::Home}>
                             { "Home" }
                         </Link<Route>>
+                        <Link<Route> classes={classes!("navbar-item")} to={Route::CarlettosChess}>
+                            { "Carlettos' Chess" }
+                        </Link<Route>>
 
                         <div class="navbar-item has-dropdown is-hoverable">
                             <div class="navbar-link">
@@ -163,6 +170,9 @@ fn switch(routes: Route) -> Html {
         }
         Route::GameOfLife => {
             html! { <GameOfLife /> }
+        }
+        Route::CarlettosChess => {
+            html! { <CarlettosChess /> }
         }
     }
 }
