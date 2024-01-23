@@ -4,7 +4,7 @@ use crate::{
     ability::{self, Ability},
     board::Board,
     pattern::{self},
-    Action, Color, Time,
+    Action, Color, Info, Pos, Time,
 };
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq, Eq)]
@@ -159,6 +159,37 @@ impl Piece {
         }
     }
 
+    pub fn ability(board: &mut Board, from: Pos, info: Info) {
+        let piece = board.get(&from).unwrap().piece.clone();
+        match piece {
+            Piece::None => (),
+            Piece::Pawn(data) => {
+                ability::Pawn::r#use(board, &from, info.clone());
+                data.on_do(&Action::Ability { from, info });
+            }
+            Piece::Knight(data) => {
+                ability::Knight::r#use(board, &from, info.clone());
+                data.on_do(&Action::Ability { from, info });
+            }
+            Piece::Bishop(data) => {
+                ability::Bishop::r#use(board, &from, info.clone());
+                data.on_do(&Action::Ability { from, info });
+            }
+            Piece::Rook(data) => {
+                ability::Rook::r#use(board, &from, info.clone());
+                data.on_do(&Action::Ability { from, info });
+            }
+            Piece::Queen(data) => {
+                ability::Queen::r#use(board, &from, info.clone());
+                data.on_do(&Action::Ability { from, info });
+            }
+            Piece::King(data) => {
+                ability::King::r#use(board, &from, info.clone());
+                data.on_do(&Action::Ability { from, info });
+            }
+        }
+    }
+
     pub fn pawn(color: Color) -> Self {
         Self::Pawn(PieceData::new(
             color,
@@ -167,23 +198,33 @@ impl Piece {
     }
 
     pub fn knight(color: Color) -> Self {
-        Self::Knight(PieceData::new(color, vec![Type::Biologic]))
+        Self::Knight(PieceData::new(
+            color,
+            vec![Type::Biologic, Type::Transportable(4)],
+        ))
     }
 
     pub fn bishop(color: Color) -> Self {
-        Self::Bishop(PieceData::new(color, vec![Type::Biologic]))
+        Self::Bishop(PieceData::new(
+            color,
+            vec![Type::Biologic, Type::Transportable(3)],
+        ))
     }
 
     pub fn rook(color: Color) -> Self {
-        Self::Rook(PieceData::new(color, vec![Type::Biologic]))
+        Self::Rook(PieceData::new(color, vec![Type::Structure]))
     }
 
     pub fn queen(color: Color) -> Self {
-        Self::Queen(PieceData::new(color, vec![Type::Biologic]))
+        Self::Queen(PieceData::new(color, vec![Type::Biologic, Type::Heroic]))
     }
 
     pub fn king(color: Color) -> Self {
-        Self::King(PieceData::new(color, vec![Type::Biologic]))
+        Self::King(PieceData::with_props(
+            color,
+            vec![Type::Biologic, Type::Heroic, Type::Immune],
+            vec![Property::AbilityUsed(false)],
+        ))
     }
 }
 
@@ -333,6 +374,7 @@ impl Effect {
 pub enum Property {
     #[default]
     None,
+    AbilityUsed(bool),
     Taken(usize),
     Pieces(Vec<Piece>),
 }
