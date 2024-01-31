@@ -573,76 +573,69 @@ impl Board {
         }
     }
 
+    pub fn same_color(&self, pos1: &Pos, pos2: &Pos) -> bool {
+        match (self.get(pos1), self.get(pos2)) {
+            (Some(tile1), Some(tile2)) => tile1.get_color() == tile2.get_color(),
+            _ => false,
+        }
+    }
+
     pub fn shape(&self) -> &Shape {
         &self.shape
     }
 
-    pub fn tile_ray_cast<F: Fn(&Tile) -> bool>(
+    pub fn ray_cast<F: Fn(&Tile) -> bool>(
         &self,
         from: &Pos,
         len: Option<usize>,
         shift: &(isize, isize),
         stop_at: F,
-    ) -> TileRayCast {
+    ) -> RayCastInfo {
         if !self.contains(from) {
-            return TileRayCast(Vec::with_capacity(0));
+            return RayCastInfo::empty();
         }
         let next = from.shift(shift.0, shift.1);
         let mut next = match next {
-            None => return TileRayCast(Vec::with_capacity(0)),
+            None => return RayCastInfo::start(from.clone()),
             Some(pos) => pos,
         };
-        let mut tiles = Vec::with_capacity(len.unwrap_or(10));
-        while self.contains(&next) && !stop_at(self.get(&next).unwrap()) {
-            tiles.push(self.get(&next).unwrap());
+        let mut mid = Vec::with_capacity(len.unwrap_or(10));
+        let mut collision = None;
+        loop {
+            // If len is achieved, collision is none.
+            if let Some(len) = len {
+                if mid.len() == len {
+                    break;
+                }
+            }
+            // if the next position is not in the board, collision is none.
+            if !self.contains(&next) {
+                break;
+            }
+            // if the next position is stop, collision is the next position.
+            if stop_at(self.get(&next).unwrap()) {
+                collision = Some(next.clone());
+                break;
+            }
+            mid.push(next.clone());
             next = match next.shift(shift.0, shift.1) {
                 None => break,
                 Some(pos) => pos,
             };
-            match len {
-                None => (),
-                Some(len) => {
-                    if tiles.len() >= len {
-                        break;
-                    }
-                }
-            }
         }
-        TileRayCast(tiles)
+        match collision {
+            None => RayCastInfo::mid(from.clone(), mid),
+            Some(collision) => RayCastInfo::collision(from.clone(), mid, collision),
+        }
     }
 
-    pub fn tile_ray_cast_empty(
+    pub fn ray_cast_empty(
         &self,
         from: &Pos,
         len: Option<usize>,
         shift: &(isize, isize),
-    ) -> TileRayCast {
-        self.tile_ray_cast(from, len, shift, |t| t.has_piece())
-    }
-
-    pub fn pos_ray_cast<F: Fn(&Tile) -> bool>(
-        &self,
-        from: &Pos,
-        len: Option<usize>,
-        shift: &(isize, isize),
-        stop_at: F,
-    ) -> PosRayCast {
-        PosRayCast(
-            self.tile_ray_cast(from, len, shift, stop_at)
-                .0
-                .iter()
-                .map(|t| t.pos.clone())
-                .collect(),
-        )
-    }
-
-    pub fn pos_ray_cast_empty(
-        &self,
-        from: &Pos,
-        len: Option<usize>,
-        shift: &(isize, isize),
-    ) -> PosRayCast {
-        self.pos_ray_cast(from, len, shift, |t| t.has_piece())
+    ) -> RayCastInfo {
+        self.ray_cast(from, len, shift, |t| t.has_piece())
     }
 
     ///
@@ -697,24 +690,113 @@ impl Default for Board {
     }
 }
 
-pub struct TileRayCast<'a>(pub Vec<&'a Tile>);
+/// A ray cast struct.
+/// Start is the starting position.
+/// Mid are the positions of the ray cast.
+/// Collision is the position of the first collision.
+pub struct RayCastInfo {
+    pub start: Option<Pos>,
+    pub mid: Option<Vec<Pos>>,
+    pub collision: Option<Pos>,
+}
 
-pub struct PosRayCast(pub Vec<Pos>);
+impl RayCastInfo {
+    pub fn empty() -> Self {
+        RayCastInfo {
+            start: None,
+            mid: None,
+            collision: None,
+        }
+    }
 
-impl PosRayCast {
+    pub fn start(start: Pos) -> Self {
+        RayCastInfo {
+            start: Some(start),
+            mid: None,
+            collision: None,
+        }
+    }
+
+    pub fn mid(start: Pos, mid: Vec<Pos>) -> Self {
+        RayCastInfo {
+            start: Some(start),
+            mid: Some(mid),
+            collision: None,
+        }
+    }
+
+    pub fn collision(start: Pos, mid: Vec<Pos>, end: Pos) -> Self {
+        RayCastInfo {
+            start: Some(start),
+            mid: Some(mid),
+            collision: Some(end),
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        matches!(
+            self,
+            RayCastInfo {
+                start: None,
+                mid: None,
+                collision: None
+            }
+        )
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        let mut len = 0;
+        if self.start.is_some() {
+            len += 1;
+        }
+        if let Some(mid) = &self.mid {
+            len += mid.len();
+        }
+        if self.collision.is_some() {
+            len += 1;
+        }
+        len
+    }
+
+    pub fn contains(&self, pos: &Pos) -> bool {
+        if let Some(start) = &self.start {
+            if start == pos {
+                return true;
+            }
+        }
+        if let Some(mid) = &self.mid {
+            if mid.contains(pos) {
+                return true;
+            }
+        }
+        if let Some(collision) = &self.collision {
+            if collision == pos {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn contains_mid(&self, pos: &Pos) -> bool {
+        if let Some(mid) = &self.mid {
+            if mid.contains(pos) {
+                return true;
+            }
+        }
+        false
     }
 
     pub fn first(&self) -> Option<&Pos> {
-        self.0.first()
+        match &self.mid {
+            None => None,
+            Some(mid) => mid.first(),
+        }
     }
 
     pub fn last(&self) -> Option<&Pos> {
-        self.0.last()
+        match &self.mid {
+            None => None,
+            Some(mid) => mid.last(),
+        }
     }
 }
