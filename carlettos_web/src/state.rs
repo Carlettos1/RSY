@@ -1,4 +1,4 @@
-use carlettos_chess::Action;
+use carlettos_chess::chess_controller::CChess;
 use chess_api::{Board, Color};
 use yew::Reducible;
 
@@ -47,11 +47,7 @@ pub enum CarlettosChessAction {
 
 #[derive(Default)]
 pub struct CarlettosChessState {
-    pub board: carlettos_chess::prelude::Board,
-    pub selected: Option<carlettos_chess::prelude::Pos>,
-    pub moves: Vec<carlettos_chess::prelude::Pos>,
-    pub takes: Vec<carlettos_chess::prelude::Pos>,
-    pub attacks: Vec<carlettos_chess::prelude::Pos>,
+    pub board: CChess,
 }
 
 impl Reducible for CarlettosChessState {
@@ -60,75 +56,12 @@ impl Reducible for CarlettosChessState {
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
             CarlettosChessAction::Start => Self {
-                board: carlettos_chess::prelude::Board::default_chessboard(),
-                ..Default::default()
+                board: CChess::default_chessboard(),
             },
-            CarlettosChessAction::OnClick(pos) if self.selected.is_none() => {
-                if self.board.get(&pos).is_none() {
-                    return self;
-                }
-                let b = self.board.clone();
-                let selected = Some(pos.clone());
-                let mut moves = vec![];
-                let mut takes = vec![];
-                let mut attacks = vec![];
-                let piece = &b.get(&pos).unwrap().piece;
-                for to in b.shape().points_iter() {
-                    let move_action = Action::Move {
-                        from: pos.clone(),
-                        to: to.clone(),
-                    };
-                    let take_action = Action::Take {
-                        from: pos.clone(),
-                        to: to.clone(),
-                    };
-                    let attack_action = Action::Attack {
-                        from: pos.clone(),
-                        to: to.clone(),
-                    };
-                    if piece.can_do(&b, move_action) {
-                        moves.push(to.clone());
-                    }
-                    if piece.can_do(&b, take_action) {
-                        takes.push(to.clone());
-                    }
-                    if piece.can_do(&b, attack_action) {
-                        attacks.push(to.clone());
-                    }
-                }
-                Self {
-                    board: b,
-                    selected,
-                    moves,
-                    takes,
-                    attacks,
-                }
-            }
-            CarlettosChessAction::OnClick(to) => {
+            CarlettosChessAction::OnClick(pos) => {
                 let mut board = self.board.clone();
-                if self.attacks.contains(&to) {
-                    board.make(Action::Attack {
-                        from: self.selected.clone().unwrap(),
-                        to: to.clone(),
-                    })
-                } else if self.takes.contains(&to) {
-                    board.make(Action::Take {
-                        from: self.selected.clone().unwrap(),
-                        to: to.clone(),
-                    })
-                } else if self.moves.contains(&to) {
-                    board.make(Action::Move {
-                        from: self.selected.clone().unwrap(),
-                        to: to.clone(),
-                    })
-                }
-                Self {
-                    board,
-                    selected: None,
-                    moves: vec![],
-                    takes: vec![],
-                    attacks: vec![],
-                }
+                board.click(pos);
+                Self { board }
             }
         }
         .into()
