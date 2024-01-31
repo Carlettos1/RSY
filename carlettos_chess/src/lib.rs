@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub mod ability;
 pub mod board;
 pub mod card;
+pub mod chess_controller;
 pub mod pattern;
 pub mod piece;
 pub mod prelude;
@@ -401,6 +402,34 @@ pub enum Action {
 }
 
 impl Action {
+    pub fn r#move(from: &Pos, to: &Pos) -> Self {
+        Self::Move {
+            from: from.clone(),
+            to: to.clone(),
+        }
+    }
+
+    pub fn take(from: &Pos, to: &Pos) -> Self {
+        Self::Take {
+            from: from.clone(),
+            to: to.clone(),
+        }
+    }
+
+    pub fn attack(from: &Pos, to: &Pos) -> Self {
+        Self::Attack {
+            from: from.clone(),
+            to: to.clone(),
+        }
+    }
+
+    pub fn ability(from: &Pos, info: Info) -> Self {
+        Self::Ability {
+            from: from.clone(),
+            info,
+        }
+    }
+
     pub fn is_move(&self) -> bool {
         matches!(self, Self::Move { from: _, to: _ })
     }
