@@ -39,8 +39,7 @@ pub fn bishop(board: &Board, from: &Pos, to: &Pos) -> bool {
     let signx = if to.x > from.x { 1isize } else { -1 };
     let signy = if to.y > from.y { 1isize } else { -1 };
     board
-        .pos_ray_cast_empty(from, None, &(signx, signy))
-        .0
+        .ray_cast_empty(from, None, &(signx, signy))
         .contains(to)
 }
 
@@ -50,28 +49,11 @@ pub fn rook(board: &Board, from: &Pos, to: &Pos) -> bool {
         return false;
     }
 
-    let signx = match to.x.cmp(&from.x) {
-        std::cmp::Ordering::Greater => 1isize,
-        std::cmp::Ordering::Equal => 0,
-        std::cmp::Ordering::Less => -1,
-    };
-    let signy = match to.y.cmp(&from.y) {
-        std::cmp::Ordering::Greater => 1isize,
-        std::cmp::Ordering::Equal => 0,
-        std::cmp::Ordering::Less => -1,
-    };
-    assert!(signx != 0 || signy != 0);
-    for d in 1..(x + y) as isize {
-        match board.get(&from.shift(d * signx, d * signy).unwrap()) {
-            None => return false,
-            Some(tile) => {
-                if tile.has_piece() {
-                    return false;
-                }
-            }
-        }
-    }
-    true
+    let signx = to.x.cmp(&from.x) as isize;
+    let signy = to.y.cmp(&from.y) as isize;
+    board
+        .ray_cast_empty(from, None, &(signx, signy))
+        .contains(to)
 }
 
 pub fn queen(board: &Board, from: &Pos, to: &Pos) -> bool {
