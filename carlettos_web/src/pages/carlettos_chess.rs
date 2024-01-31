@@ -106,7 +106,7 @@ pub fn chess() -> Html {
         html! {
             <div class={classes!("carlettos-chess-row")}>
                 { for chess.board.row_iter(row).map(|tile| {
-                    html! { <ChessTile board={chess.board.clone()} piece={tile.piece.clone()} square={tile.pos().clone()} on_click={on_tile_click.clone()} is_move={chess.moves.contains(tile.pos())} is_take={chess.takes.contains(tile.pos())} is_attack={chess.attacks.contains(tile.pos())} /> }
+                    html! { <ChessTile board={chess.board.board.clone()} piece={tile.piece.clone()} square={tile.pos().clone()} on_click={on_tile_click.clone()} is_move={chess.board.has_move(tile.pos())} is_take={chess.board.has_take(tile.pos())} is_attack={chess.board.has_attack(tile.pos())} /> }
                 }) }
             </div>
         }});
@@ -120,6 +120,10 @@ pub fn chess() -> Html {
             <section class={classes!("carlettos-chess-board")}>
                 { for rows }
             </section>
+            <footer>
+                <div>{ format!("Selected: {:?}", chess.board.selected) }</div>
+                <div>{ format!("Debug: {:?}", chess.board.selected.as_ref().map(|p| chess.board.board.get(p))) }</div>
+            </footer>
         </section>
     }
 }
