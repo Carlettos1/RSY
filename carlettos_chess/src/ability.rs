@@ -164,7 +164,7 @@ impl Ability for Rook {
                 .map(|t| t.pos().clone())
                 .collect::<Vec<_>>();
             for rook_pos in pos_vec {
-                let rc = board.pos_ray_cast_empty(&rook_pos, None, &(&direction).into());
+                let rc = board.ray_cast_empty(&rook_pos, None, &(&direction).into());
                 if let Some(last) = rc.last() {
                     let piece = board.get_mut(&rook_pos).unwrap().remove();
                     board.get_mut(last).unwrap().replace(piece);
