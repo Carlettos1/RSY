@@ -49,6 +49,7 @@ impl ChessController {
     }
 }
 
+#[derive(PartialEq)]
 pub struct CarlettosChessController {
     state: UseReducerHandle<CarlettosChessState>,
 }
@@ -66,6 +67,11 @@ impl CarlettosChessController {
     pub fn on_click(&self, from: Pos) {
         let chess = self.state.clone();
         chess.dispatch(CarlettosChessAction::OnClick(from));
+    }
+
+    pub fn on_display_click(&self, from: Pos) {
+        let chess = self.state.clone();
+        chess.dispatch(CarlettosChessAction::DisplayClick(from));
     }
 }
 
