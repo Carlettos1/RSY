@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use carlettos_chess::prelude::*;
+use carlettos_chess::{chess_controller::CChess, prelude::*};
 use yew::prelude::*;
 
 use crate::{controllers::CarlettosChessController, state::CarlettosChessState};
@@ -44,6 +44,7 @@ pub fn tile(
         Piece::Rook(data) => format!("{:?}_rook", data.color).to_lowercase(),
         Piece::Queen(data) => format!("{:?}_queen", data.color).to_lowercase(),
         Piece::King(data) => format!("{:?}_king", data.color).to_lowercase(),
+        Piece::Archer(data) => format!("{:?}_archer", data.color).to_lowercase(),
     };
 
     let on_square_click = {
@@ -85,6 +86,14 @@ pub fn chess() -> Html {
     let chess = use_reducer(CarlettosChessState::default);
     let chess_controller = Rc::new(CarlettosChessController::new(chess.clone()));
 
+    {
+        let chess_controller = chess_controller.clone();
+        use_effect_with((), move |_| {
+            chess_controller.start();
+            || ()
+        });
+    }
+
     let on_tile_click = {
         let chess_controller = chess_controller.clone();
         Callback::from(move |pos| chess_controller.on_click(pos))
@@ -102,6 +111,11 @@ pub fn chess() -> Html {
         move |_| on_start_click.emit(())
     };
 
+    let on_display_click = {
+        let chess_controller = chess_controller.clone();
+        Callback::from(move |pos| chess_controller.on_display_click(pos))
+    };
+
     let rows = (0..chess.board.height()).rev().map(|row| {
         html! {
             <div class={classes!("carlettos-chess-row")}>
@@ -117,6 +131,7 @@ pub fn chess() -> Html {
                 <h1>{ "Carlettos Chess" }</h1>
                 <button onclick={on_button_click}>{ "Start" }</button>
             </header>
+            <ChessPiecesDisplay display={chess.display.clone()} on_click={on_display_click} />
             <section class={classes!("carlettos-chess-board")}>
                 { for rows }
             </section>
@@ -125,5 +140,36 @@ pub fn chess() -> Html {
                 <div>{ format!("Debug: {:?}", chess.board.selected.as_ref().map(|p| chess.board.board.get(p))) }</div>
             </footer>
         </section>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct ChessPieceDisplayProp {
+    display: CChess,
+    on_click: Callback<Pos>,
+}
+/// This component is used to display pieces that can be placed on the board.
+/// So I can test new pieces without having to change the board state.
+/// The placement of the pieces is done by clicking on the piece and then on the board.
+#[function_component(ChessPiecesDisplay)]
+pub fn chess_pieces_display(
+    ChessPieceDisplayProp { display, on_click }: &ChessPieceDisplayProp,
+) -> Html {
+    let rows = (0..display.height()).rev().map(|row| {
+        html! {
+            <div class={classes!("carlettos-chess-row")}>
+                { for display.row_iter(row).map(|tile| {
+                    let is_move = tile.pos() == &display.selected;
+                    html! { <ChessTile board={display.board.clone()} piece={tile.piece.clone()} square={tile.pos().clone()} on_click={on_click.clone()} is_move={is_move} is_take={false} is_attack={false} /> }
+                }) }
+            </div>
+        }});
+
+    html! {
+        <div>
+            <div class={classes!("carlettos-chess-board", "cchess-display")}>
+                { for rows }
+            </div>
+        </div>
     }
 }
