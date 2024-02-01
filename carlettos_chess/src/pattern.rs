@@ -8,7 +8,7 @@ pub fn pawn_move(board: &Board, color: &Color, from: &Pos, to: &Pos) -> bool {
     if to == &next {
         true
     } else {
-        to == &next2 && board.is_empty(to)
+        to == &next2 && next.map(|n| board.is_empty(&n)).unwrap_or_default()
     }
 }
 
@@ -63,6 +63,15 @@ pub fn queen(board: &Board, from: &Pos, to: &Pos) -> bool {
 pub fn square(from: &Pos, to: &Pos, range: usize) -> bool {
     let Pos { x, y } = from.abs_diff(to);
     x <= range && y <= range
+}
+
+pub fn archer_move(from: &Pos, to: &Pos) -> bool {
+    magician_move(from, to) || king(from, to)
+}
+
+pub fn magician_move(from: &Pos, to: &Pos) -> bool {
+    let Pos { x, y } = from.abs_diff(to);
+    x == y && x <= 2
 }
 
 #[cfg(test)]
