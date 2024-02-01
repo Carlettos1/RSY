@@ -43,11 +43,13 @@ impl Reducible for ChessState {
 pub enum CarlettosChessAction {
     Start,
     OnClick(carlettos_chess::prelude::Pos),
+    DisplayClick(carlettos_chess::prelude::Pos),
 }
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct CarlettosChessState {
     pub board: CChess,
+    pub display: CChess,
 }
 
 impl Reducible for CarlettosChessState {
@@ -57,11 +59,32 @@ impl Reducible for CarlettosChessState {
         match action {
             CarlettosChessAction::Start => Self {
                 board: CChess::default_chessboard(),
+                display: CChess::default_display(),
             },
             CarlettosChessAction::OnClick(pos) => {
                 let mut board = self.board.clone();
-                board.click(pos);
-                Self { board }
+                let mut display = self.display.clone();
+                log::info!("display selected: {:?}", display.selected);
+                match display.selected {
+                    Some(dis) => {
+                        // put the selected piece into the board
+                        let piece = display.board.get(&dis).unwrap().piece.clone();
+                        board.board.get_mut(&pos).unwrap().replace(piece);
+                    }
+                    None => {
+                        board.click(pos);
+                    }
+                }
+                display.selected = None;
+                Self { board, display }
+            }
+            CarlettosChessAction::DisplayClick(pos) => {
+                let mut display = self.display.clone();
+                display.selected = Some(pos);
+                Self {
+                    board: self.board.clone(),
+                    display,
+                }
             }
         }
         .into()
