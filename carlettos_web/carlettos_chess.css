@@ -14,6 +14,7 @@
 }
 
 .carlettos-chess-square {
+    position: relative;
     display: table-cell;
     max-width: 50px;
     max-height: 50px;
@@ -26,7 +27,8 @@
 
 .carlettos-piece {
     position: absolute;
-    margin: -33px 0 0 -25px;
+    margin-top: -33px;
+    margin-left: -25px;
     width: 50px;
     height: 50px;
     background-size: cover;
@@ -66,4 +68,10 @@
 
 .carlettos-movement.take-attack {
     background-color: purple;
+}
+
+/* Display of all chess pieces */
+.cchess-display {
+    overflow-x: scroll;
+    width: 100%;
 }
