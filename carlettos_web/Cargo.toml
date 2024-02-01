@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3", features = ["console"] }
 yew = { version = "0.21", features = ["csr"] }
 yew-router = "0.18"
 reqwasm = "0.5"
@@ -20,3 +19,9 @@ wasm-logger = "0.2"
 
 carlettos_chess = { path = "../carlettos_chess" }
 
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    "console",
+    "css",
+]
