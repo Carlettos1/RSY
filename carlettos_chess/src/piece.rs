@@ -64,6 +64,7 @@ pub enum Piece {
     Rook(PieceData),
     Queen(PieceData),
     King(PieceData),
+    Archer(PieceData),
 }
 
 impl Piece {
@@ -76,6 +77,7 @@ impl Piece {
             Piece::Rook(data) => Some(&data.color),
             Piece::Queen(data) => Some(&data.color),
             Piece::King(data) => Some(&data.color),
+            Piece::Archer(data) => Some(&data.color),
         }
     }
 
@@ -88,6 +90,7 @@ impl Piece {
             Piece::Rook(data) => Some(data),
             Piece::Queen(data) => Some(data),
             Piece::King(data) => Some(data),
+            Piece::Archer(data) => Some(data),
         }
     }
 
@@ -154,6 +157,14 @@ impl Piece {
                         (Piece::King(_), Action::Ability { from, info }) => {
                             ability::King::can_use(board, &from, &info)
                         }
+                        (Piece::Archer(_), Action::Move { from, to }) => {
+                            pattern::archer_move(&from, &to)
+                        }
+                        (Piece::Archer(_), Action::Take { from: _, to: _ }) => false,
+                        (Piece::Archer(_), Action::Attack { from, to }) => {
+                            pattern::square(&from, &to, 4)
+                        }
+                        (Piece::Archer(_), Action::Ability { from: _, info: _ }) => false,
                     }
             }
         }
@@ -187,6 +198,7 @@ impl Piece {
                 ability::King::r#use(board, &from, info.clone());
                 data.on_do(&Action::Ability { from, info });
             }
+            Piece::Archer(_) => (),
         }
     }
 
@@ -224,6 +236,13 @@ impl Piece {
             color,
             vec![Type::Biologic, Type::Heroic, Type::Immune],
             vec![Property::AbilityUsed(false)],
+        ))
+    }
+
+    pub fn archer(color: Color) -> Self {
+        Self::Archer(PieceData::new(
+            color,
+            vec![Type::Biologic, Type::Transportable(3)],
         ))
     }
 }
