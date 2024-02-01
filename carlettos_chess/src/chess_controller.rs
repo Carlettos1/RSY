@@ -3,8 +3,12 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    board::{Board, Tile},
-    Action, Pos,
+    board::{
+        shape::{Shape, Square},
+        Board, Tile,
+    },
+    piece::Piece,
+    Action, Color, Pos,
 };
 
 #[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -102,6 +106,89 @@ impl CChess {
                 // TODO: handle ability
             }
             _ => actions,
+        }
+    }
+
+    pub fn default_display() -> Self {
+        let mut board = Board::with_shape(Shape::new(vec![Square {
+            anchor: Pos::new(0, 0),
+            height: 2,
+            width: 30,
+        }]));
+        board
+            .get_mut(&Pos::new(0, 0))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(0, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(1, 0))
+            .unwrap()
+            .replace(Piece::knight(Color::White));
+        board
+            .get_mut(&Pos::new(1, 1))
+            .unwrap()
+            .replace(Piece::knight(Color::Black));
+        board
+            .get_mut(&Pos::new(2, 0))
+            .unwrap()
+            .replace(Piece::bishop(Color::White));
+        board
+            .get_mut(&Pos::new(2, 1))
+            .unwrap()
+            .replace(Piece::bishop(Color::Black));
+        board
+            .get_mut(&Pos::new(3, 0))
+            .unwrap()
+            .replace(Piece::rook(Color::White));
+        board
+            .get_mut(&Pos::new(3, 1))
+            .unwrap()
+            .replace(Piece::rook(Color::Black));
+        board
+            .get_mut(&Pos::new(4, 0))
+            .unwrap()
+            .replace(Piece::queen(Color::White));
+        board
+            .get_mut(&Pos::new(4, 1))
+            .unwrap()
+            .replace(Piece::queen(Color::Black));
+        board
+            .get_mut(&Pos::new(5, 0))
+            .unwrap()
+            .replace(Piece::king(Color::White));
+        board
+            .get_mut(&Pos::new(5, 1))
+            .unwrap()
+            .replace(Piece::king(Color::Black));
+        board
+            .get_mut(&Pos::new(6, 0))
+            .unwrap()
+            .replace(Piece::archer(Color::White));
+        board
+            .get_mut(&Pos::new(6, 1))
+            .unwrap()
+            .replace(Piece::archer(Color::Black));
+
+        let piece = Piece::None;
+
+        // This is just so the compiler forces me to add the new pieces to the display.
+        #[allow(unused_variables)]
+        match piece {
+            Piece::None => {}
+            Piece::Pawn(data) => {}
+            Piece::Knight(data) => {}
+            Piece::Bishop(data) => {}
+            Piece::Rook(data) => {}
+            Piece::Queen(data) => {}
+            Piece::King(data) => {}
+            Piece::Archer(data) => {}
+        }
+        Self {
+            board,
+            ..Default::default()
         }
     }
 
