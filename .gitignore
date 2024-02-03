@@ -5,3 +5,4 @@ log.*
 db/storage/
 */history.txt
 mprocs.log
+carlettos_web/dist/index.html

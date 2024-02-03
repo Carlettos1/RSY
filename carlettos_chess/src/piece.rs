@@ -65,6 +65,7 @@ pub enum Piece {
     Queen(PieceData),
     King(PieceData),
     Archer(PieceData),
+    Ballista(PieceData),
 }
 
 impl Piece {
@@ -78,6 +79,7 @@ impl Piece {
             Piece::Queen(data) => Some(&data.color),
             Piece::King(data) => Some(&data.color),
             Piece::Archer(data) => Some(&data.color),
+            Piece::Ballista(data) => Some(&data.color),
         }
     }
 
@@ -91,6 +93,7 @@ impl Piece {
             Piece::Queen(data) => Some(data),
             Piece::King(data) => Some(data),
             Piece::Archer(data) => Some(data),
+            Piece::Ballista(data) => Some(data),
         }
     }
 
@@ -165,6 +168,14 @@ impl Piece {
                             pattern::square(&from, &to, 4)
                         }
                         (Piece::Archer(_), Action::Ability { from: _, info: _ }) => false,
+                        (Piece::Ballista(_), Action::Move { from, to }) => {
+                            pattern::structure_move(&from, &to)
+                        }
+                        (Piece::Ballista(_), Action::Take { from: _, to: _ }) => false,
+                        (Piece::Ballista(_), Action::Attack { from, to }) => {
+                            pattern::cross(&from, &to, 6)
+                        }
+                        (Piece::Ballista(_), Action::Ability { from: _, info: _ }) => false,
                     }
             }
         }
@@ -199,6 +210,7 @@ impl Piece {
                 data.on_do(&Action::Ability { from, info });
             }
             Piece::Archer(_) => (),
+            Piece::Ballista(_) => (),
         }
     }
 
@@ -244,6 +256,10 @@ impl Piece {
             color,
             vec![Type::Biologic, Type::Transportable(3)],
         ))
+    }
+
+    pub fn ballista(color: Color) -> Self {
+        Self::Ballista(PieceData::new(color, vec![Type::Structure]))
     }
 }
 

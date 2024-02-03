@@ -45,6 +45,7 @@ pub fn tile(
         Piece::Queen(data) => format!("{:?}_queen", data.color).to_lowercase(),
         Piece::King(data) => format!("{:?}_king", data.color).to_lowercase(),
         Piece::Archer(data) => format!("{:?}_archer", data.color).to_lowercase(),
+        Piece::Ballista(data) => format!("{:?}_ballista", data.color).to_lowercase(),
     };
 
     let on_square_click = {

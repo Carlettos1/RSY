@@ -65,6 +65,11 @@ pub fn square(from: &Pos, to: &Pos, range: usize) -> bool {
     x <= range && y <= range
 }
 
+pub fn cross(from: &Pos, to: &Pos, range: usize) -> bool {
+    let Pos { x, y } = from.abs_diff(to);
+    (x == 0 || y == 0) && (x <= range || y <= range)
+}
+
 pub fn archer_move(from: &Pos, to: &Pos) -> bool {
     magician_move(from, to) || king(from, to)
 }
@@ -72,6 +77,11 @@ pub fn archer_move(from: &Pos, to: &Pos) -> bool {
 pub fn magician_move(from: &Pos, to: &Pos) -> bool {
     let Pos { x, y } = from.abs_diff(to);
     x == y && x <= 2
+}
+
+pub fn structure_move(from: &Pos, to: &Pos) -> bool {
+    let Pos { x, y } = from.abs_diff(to);
+    (x == 0 && y == 1) || (x == 1 && y == 0)
 }
 
 #[cfg(test)]

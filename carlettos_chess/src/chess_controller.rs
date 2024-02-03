@@ -171,6 +171,14 @@ impl CChess {
             .get_mut(&Pos::new(6, 1))
             .unwrap()
             .replace(Piece::archer(Color::Black));
+        board
+            .get_mut(&Pos::new(7, 0))
+            .unwrap()
+            .replace(Piece::ballista(Color::White));
+        board
+            .get_mut(&Pos::new(7, 1))
+            .unwrap()
+            .replace(Piece::ballista(Color::Black));
 
         let piece = Piece::None;
 
@@ -185,6 +193,7 @@ impl CChess {
             Piece::Queen(data) => {}
             Piece::King(data) => {}
             Piece::Archer(data) => {}
+            Piece::Ballista(data) => {}
         }
         Self {
             board,
