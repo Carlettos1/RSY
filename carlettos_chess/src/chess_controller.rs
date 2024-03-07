@@ -179,6 +179,118 @@ impl CChess {
             .get_mut(&Pos::new(7, 1))
             .unwrap()
             .replace(Piece::ballista(Color::Black));
+        board
+            .get_mut(&Pos::new(8, 0))
+            .unwrap()
+            .replace(Piece::builder(Color::White));
+        board
+            .get_mut(&Pos::new(8, 1))
+            .unwrap()
+            .replace(Piece::builder(Color::Black));
+        board
+            .get_mut(&Pos::new(9, 0))
+            .unwrap()
+            .replace(Piece::cannon(Color::White));
+        board
+            .get_mut(&Pos::new(9, 1))
+            .unwrap()
+            .replace(Piece::cannon(Color::Black));
+        board
+            .get_mut(&Pos::new(10, 0))
+            .unwrap()
+            .replace(Piece::catapult(Color::White));
+        board
+            .get_mut(&Pos::new(10, 1))
+            .unwrap()
+            .replace(Piece::catapult(Color::Black));
+        board
+            .get_mut(&Pos::new(11, 0))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::White));
+        board
+            .get_mut(&Pos::new(11, 1))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(12, 0))
+            .unwrap()
+            .replace(Piece::magician(Color::White));
+        board
+            .get_mut(&Pos::new(12, 1))
+            .unwrap()
+            .replace(Piece::magician(Color::Black));
+        board
+            .get_mut(&Pos::new(13, 0))
+            .unwrap()
+            .replace(Piece::paladin(Color::White));
+        board
+            .get_mut(&Pos::new(13, 1))
+            .unwrap()
+            .replace(Piece::paladin(Color::Black));
+        board
+            .get_mut(&Pos::new(14, 0))
+            .unwrap()
+            .replace(Piece::ram(Color::White));
+        board
+            .get_mut(&Pos::new(14, 1))
+            .unwrap()
+            .replace(Piece::ram(Color::Black));
+        board
+            .get_mut(&Pos::new(15, 0))
+            .unwrap()
+            .replace(Piece::shield_bearer(Color::White));
+        board
+            .get_mut(&Pos::new(15, 1))
+            .unwrap()
+            .replace(Piece::shield_bearer(Color::Black));
+        board
+            .get_mut(&Pos::new(16, 0))
+            .unwrap()
+            .replace(Piece::ship(Color::White));
+        board
+            .get_mut(&Pos::new(16, 1))
+            .unwrap()
+            .replace(Piece::ship(Color::Black));
+        board
+            .get_mut(&Pos::new(17, 0))
+            .unwrap()
+            .replace(Piece::super_pawn(Color::White));
+        board
+            .get_mut(&Pos::new(17, 1))
+            .unwrap()
+            .replace(Piece::super_pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(18, 0))
+            .unwrap()
+            .replace(Piece::tesla_tower(Color::White));
+        board
+            .get_mut(&Pos::new(18, 1))
+            .unwrap()
+            .replace(Piece::tesla_tower(Color::Black));
+        board
+            .get_mut(&Pos::new(19, 0))
+            .unwrap()
+            .replace(Piece::wall(Color::White));
+        board
+            .get_mut(&Pos::new(19, 1))
+            .unwrap()
+            .replace(Piece::wall(Color::Black));
+        board
+            .get_mut(&Pos::new(20, 0))
+            .unwrap()
+            .replace(Piece::warlock(Color::White));
+        board
+            .get_mut(&Pos::new(20, 1))
+            .unwrap()
+            .replace(Piece::warlock(Color::Black));
+        board
+            .get_mut(&Pos::new(21, 0))
+            .unwrap()
+            .replace(Piece::portal(Color::White));
+        board
+            .get_mut(&Pos::new(21, 1))
+            .unwrap()
+            .replace(Piece::portal(Color::Black));
 
         let piece = Piece::None;
 
@@ -194,6 +306,20 @@ impl CChess {
             Piece::King(data) => {}
             Piece::Archer(data) => {}
             Piece::Ballista(data) => {}
+            Piece::Builder(data) => {}
+            Piece::Cannon(data) => {}
+            Piece::Catapult(data) => {}
+            Piece::CrazyPawn(data) => {}
+            Piece::Magician(data) => {}
+            Piece::Paladin(data) => {}
+            Piece::Ram(data) => {}
+            Piece::ShieldBearer(data) => {}
+            Piece::Ship(data) => {}
+            Piece::SuperPawn(data) => {}
+            Piece::TeslaTower(data) => {}
+            Piece::Wall(data) => {}
+            Piece::Warlock(data) => {}
+            Piece::Portal(data) => {}
         }
         Self {
             board,

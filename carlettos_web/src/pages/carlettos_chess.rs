@@ -46,6 +46,20 @@ pub fn tile(
         Piece::King(data) => format!("{:?}_king", data.color).to_lowercase(),
         Piece::Archer(data) => format!("{:?}_archer", data.color).to_lowercase(),
         Piece::Ballista(data) => format!("{:?}_ballista", data.color).to_lowercase(),
+        Piece::Builder(data) => format!("{:?}_builder", data.color).to_lowercase(),
+        Piece::Cannon(data) => format!("{:?}_cannon", data.color).to_lowercase(),
+        Piece::Catapult(data) => format!("{:?}_catapult", data.color).to_lowercase(),
+        Piece::CrazyPawn(data) => format!("{:?}_crazy_pawn", data.color).to_lowercase(),
+        Piece::Magician(data) => format!("{:?}_magician", data.color).to_lowercase(),
+        Piece::Paladin(data) => format!("{:?}_paladin", data.color).to_lowercase(),
+        Piece::Ram(data) => format!("{:?}_ram", data.color).to_lowercase(),
+        Piece::ShieldBearer(data) => format!("{:?}_shield_bearer", data.color).to_lowercase(),
+        Piece::Ship(data) => format!("{:?}_ship", data.color).to_lowercase(),
+        Piece::SuperPawn(data) => format!("{:?}_super_pawn", data.color).to_lowercase(),
+        Piece::TeslaTower(data) => format!("{:?}_tesla_tower", data.color).to_lowercase(),
+        Piece::Wall(data) => format!("{:?}_wall", data.color).to_lowercase(),
+        Piece::Warlock(data) => format!("{:?}_warlock", data.color).to_lowercase(),
+        Piece::Portal(data) => format!("{:?}_portal", data.color).to_lowercase(),
     };
 
     let on_square_click = {

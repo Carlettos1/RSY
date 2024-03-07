@@ -3,9 +3,15 @@ use std::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
+use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 
-use crate::{card::Cards, piece::Piece, Action, Color, Pos};
+use crate::{
+    card::{Card, Cards},
+    pattern,
+    piece::{Effect, Piece, PieceData, Type},
+    Action, Color, Pos, Time,
+};
 
 use self::shape::Shape;
 
@@ -125,6 +131,16 @@ impl Player {
     pub fn id(&self) -> &usize {
         &self.id
     }
+
+    pub fn take_from_deck(&mut self) -> Result<(), EventFunctionError> {
+        match self.deck.take() {
+            Some(card) => {
+                self.hand.add(card);
+                Ok(())
+            }
+            None => Err(EventFunctionError::EmptyDeck),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
@@ -195,6 +211,14 @@ impl Tile {
 
     pub fn has_king(&self) -> bool {
         matches!(self.piece, Piece::King(_))
+    }
+
+    pub fn has_archer(&self) -> bool {
+        matches!(self.piece, Piece::Archer(_))
+    }
+
+    pub fn has_ballista(&self) -> bool {
+        matches!(self.piece, Piece::Ballista(_))
     }
 }
 
@@ -326,10 +350,13 @@ pub mod shape {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct Board {
     pub tiles: Vec<Tile>,
+    pub rng: BoardRng,
+    pub time: Time,
     players: Vec<Player>,
     cards: Cards,
     dead_pieces: Vec<Piece>,
     shape: Shape,
+    events: Events,
 }
 
 impl Board {
@@ -471,44 +498,32 @@ impl Board {
             tiles: shape.points_iter().map(Tile::new).collect(),
             dead_pieces: Vec::new(),
             shape,
-            players: vec![
-                Player::new(Color::White, 0, Cards::default()),
-                Player::new(Color::Black, 1, Cards::default()),
-            ],
-            cards: Cards::default(),
+            ..Default::default()
         }
     }
 
     pub fn with_default_players(tiles: Vec<Tile>, shape: Shape) -> Self {
         Self {
             tiles,
-            dead_pieces: Vec::new(),
             shape,
-            players: vec![
-                Player::new(Color::White, 0, Cards::default()),
-                Player::new(Color::Black, 1, Cards::default()),
-            ],
-            cards: Cards::default(),
+            ..Default::default()
         }
     }
 
-    pub fn with_empty_tiles(shape: Shape, players: Vec<Player>) -> Self {
+    pub fn with_empty_tiles(shape: Shape) -> Self {
         Self {
             tiles: shape.points_iter().map(Tile::new).collect(),
-            dead_pieces: Vec::new(),
             shape,
-            players,
-            cards: Cards::default(),
+            ..Default::default()
         }
     }
 
     pub fn new(tiles: Vec<Tile>, shape: Shape, players: Vec<Player>) -> Self {
         Self {
             tiles,
-            dead_pieces: Vec::new(),
             shape,
             players,
-            cards: Cards::default(),
+            ..Default::default()
         }
     }
 
@@ -672,6 +687,110 @@ impl Board {
             Action::Ability { from, info } => Piece::ability(self, from, info),
         }
     }
+
+    pub fn tick(&mut self) {
+        // add movement, tick everything on movement
+        // if movement == current_player.max_movements, add turn, tick turn
+        // if turn == players.len(), add round, tick round
+        // TODO: TICK
+        // tick pieces
+        // tick rng
+        // tick effects
+        // tick types
+        // tick cards
+    }
+
+    pub fn player_from_id(&self, player_id: usize) -> Option<&Player> {
+        self.players.iter().find(|player| player.id == player_id)
+    }
+
+    pub fn player_from_color(&self, color: &Color) -> Option<&Player> {
+        self.players.iter().find(|player| &player.color == color)
+    }
+
+    pub fn mut_player_from_id(&mut self, player_id: usize) -> Option<&mut Player> {
+        self.players
+            .iter_mut()
+            .find(|player| player.id == player_id)
+    }
+
+    pub fn mut_player_from_color(&mut self, color: &Color) -> Option<&mut Player> {
+        self.players
+            .iter_mut()
+            .find(|player| &player.color == color)
+    }
+
+    pub fn current_player(&self) -> &Player {
+        &self.players[self.time.turn]
+    }
+
+    pub fn add_event(&mut self, event: Event) {
+        self.events.events.push(event);
+    }
+
+    pub fn has_card_on_board(&self, card: Card) -> bool {
+        self.cards.0.contains(&card)
+    }
+
+    pub fn has_any_card_on_board(&self, cards: Vec<Card>) -> bool {
+        self.cards.0.iter().any(|card| cards.contains(card))
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Tile> {
+        self.tiles.iter()
+    }
+
+    pub fn iter_from_pattern<'a, F: Fn(&Pos, &Pos) -> bool + 'a>(
+        &'a self,
+        from: &'a Pos,
+        f: F,
+    ) -> impl Iterator<Item = &Tile> + '_ {
+        self.iter()
+            .filter(move |tile| tile.pos() != from && f(from, tile.pos()))
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Tile> {
+        self.tiles.iter_mut()
+    }
+
+    pub fn iter_mut_from_pattern<'a, F: Fn(&Pos, &Pos) -> bool + 'a>(
+        &'a mut self,
+        from: &'a Pos,
+        f: F,
+    ) -> impl Iterator<Item = &mut Tile> + '_ {
+        self.iter_mut()
+            .filter(move |tile| tile.pos() != from && f(from, tile.pos()))
+    }
+
+    pub fn pos_vec(&self) -> Vec<Pos> {
+        self.shape.points_iter().collect()
+    }
+
+    pub fn pos_vec_from_pattern<'a, F: Fn(&Pos, &Pos) -> bool + 'a>(
+        &'a self,
+        from: &'a Pos,
+        f: F,
+    ) -> Vec<Pos> {
+        self.iter_from_pattern(from, f)
+            .map(|tile| tile.pos.clone())
+            .collect()
+    }
+
+    pub fn get_data(&self, pos: &Pos) -> Option<&PieceData> {
+        self.get(pos).and_then(|tile| tile.piece.data())
+    }
+
+    pub fn get_mut_data(&mut self, pos: &Pos) -> Option<&mut PieceData> {
+        self.get_mut(pos).and_then(|tile| tile.piece.mut_data())
+    }
+
+    pub fn get_piece(&self, pos: &Pos) -> Option<&Piece> {
+        self.get(pos).map(|tile| &tile.piece)
+    }
+
+    pub fn get_mut_piece(&mut self, pos: &Pos) -> Option<&mut Piece> {
+        self.get_mut(pos).map(|tile| &mut tile.piece)
+    }
 }
 
 impl Default for Board {
@@ -686,6 +805,9 @@ impl Default for Board {
                 Player::new(Color::Black, 1, Cards::default()),
             ],
             cards: Cards::default(),
+            rng: BoardRng::default(),
+            events: Events::default(),
+            time: Time::default(),
         }
     }
 }
@@ -797,6 +919,252 @@ impl RayCastInfo {
         match &self.mid {
             None => None,
             Some(mid) => mid.last(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub struct BoardRng {
+    movement_rng: RandomNumberGenerator,
+    turn_rng: RandomNumberGenerator,
+    round_rng: RandomNumberGenerator,
+}
+
+impl Default for BoardRng {
+    fn default() -> Self {
+        Self {
+            movement_rng: RandomNumberGenerator::with_seed(thread_rng().gen()),
+            turn_rng: RandomNumberGenerator::with_seed(thread_rng().gen()),
+            round_rng: RandomNumberGenerator::with_seed(thread_rng().gen()),
+        }
+    }
+}
+
+impl BoardRng {
+    pub fn movement(&self) -> f64 {
+        self.movement_rng.get_f64()
+    }
+
+    pub fn turn(&self) -> f64 {
+        self.turn_rng.get_f64()
+    }
+
+    pub fn round(&self) -> f64 {
+        self.round_rng.get_f64()
+    }
+
+    pub fn next_movement(&mut self) {
+        self.movement_rng.next();
+    }
+
+    pub fn next_turn(&mut self) {
+        self.turn_rng.next();
+    }
+
+    pub fn next_round(&mut self) {
+        self.round_rng.next();
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub struct RandomNumberGenerator {
+    pub seed: u64,
+    pub a: u64,
+    pub c: u64,
+    pub m: u64,
+}
+
+impl Default for RandomNumberGenerator {
+    fn default() -> Self {
+        Self {
+            seed: 1,
+            a: 1_103_515_245,
+            c: 12345,
+            m: 32768,
+        }
+    }
+}
+
+impl RandomNumberGenerator {
+    pub fn with_seed(seed: u64) -> Self {
+        Self {
+            seed: seed % 32768,
+            ..Default::default()
+        }
+    }
+
+    pub fn next(&mut self) {
+        self.seed = (self.a * self.seed + self.c) % self.m;
+    }
+
+    pub fn get_u64(&self) -> u64 {
+        self.seed
+    }
+
+    pub fn get_f64(&self) -> f64 {
+        self.seed as f64 / self.m as f64
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, Default)]
+pub struct Events {
+    events: Vec<Event>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub struct Event {
+    name: String,
+    time: Time,
+    pos: Option<Pos>,
+    functions: Vec<EventFunction>,
+}
+
+impl Event {
+    pub fn new(name: String, functions: Vec<EventFunction>) -> Self {
+        Self {
+            name,
+            time: Time::turns(1),
+            pos: None,
+            functions,
+        }
+    }
+
+    pub fn with_time(name: String, time: Time, functions: Vec<EventFunction>) -> Self {
+        Self {
+            name,
+            time,
+            pos: None,
+            functions,
+        }
+    }
+
+    pub fn with_pos(name: String, pos: Pos, functions: Vec<EventFunction>) -> Self {
+        Self {
+            name,
+            time: Time::turns(1),
+            pos: Some(pos),
+            functions,
+        }
+    }
+
+    pub fn full(name: String, time: Time, pos: Pos, functions: Vec<EventFunction>) -> Self {
+        Self {
+            name,
+            time,
+            pos: Some(pos),
+            functions,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub enum EventFunction {
+    Nothing,
+    TakeCard(usize),
+    ShuffleDeck(usize),
+    ApplyEffect(Effect, Pos, FilterFunction),
+}
+
+impl EventFunction {
+    pub fn act(self, board: &mut Board) -> Result<(), EventFunctionError> {
+        match self {
+            EventFunction::Nothing => Ok(()),
+            EventFunction::TakeCard(player_id) => {
+                let player = board.mut_player_from_id(player_id);
+                match player {
+                    Some(player) => player.take_from_deck(),
+                    None => Err(EventFunctionError::PlayerNotFound),
+                }
+            }
+            EventFunction::ShuffleDeck(player_id) => {
+                let player = board.mut_player_from_id(player_id);
+                match player {
+                    Some(player) => {
+                        player.deck.shuffle();
+                        Ok(())
+                    }
+                    None => Err(EventFunctionError::PlayerNotFound),
+                }
+            }
+            Self::ApplyEffect(effect, from, filter) => {
+                for pos in
+                    board.pos_vec_from_pattern(&from, |from, to| filter.filter(board, from, to))
+                {
+                    if let Some(tile) = board.get_mut(&pos) {
+                        if let Some(data) = tile.piece.mut_data() {
+                            data.add_effect(effect.clone())
+                        }
+                    }
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub enum EventFunctionError {
+    PlayerNotFound,
+    EmptyDeck,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub enum FilterFunction {
+    Square(usize),
+    Cross(usize),
+    IsType(Type),
+    IsNotType(Type),
+    IsColor(Color),
+    IsNotColor(Color),
+    HasEffect(Effect),
+    Pair(Box<FilterFunction>, Box<FilterFunction>),
+    Trio(
+        Box<FilterFunction>,
+        Box<FilterFunction>,
+        Box<FilterFunction>,
+    ),
+}
+
+impl FilterFunction {
+    pub fn pair(ff1: FilterFunction, ff2: FilterFunction) -> FilterFunction {
+        FilterFunction::Pair(Box::new(ff1), Box::new(ff2))
+    }
+    pub fn trio(ff1: FilterFunction, ff2: FilterFunction, ff3: FilterFunction) -> FilterFunction {
+        FilterFunction::Trio(Box::new(ff1), Box::new(ff2), Box::new(ff3))
+    }
+
+    pub fn filter(&self, board: &Board, from: &Pos, to: &Pos) -> bool {
+        match self {
+            FilterFunction::Cross(range) => pattern::cross(from, to, *range),
+            FilterFunction::Square(range) => pattern::square(from, to, *range),
+            FilterFunction::IsType(t) => board
+                .get_piece(to)
+                .map(|piece| piece.is_type(t))
+                .unwrap_or_default(),
+            FilterFunction::IsNotType(t) => board
+                .get_piece(to)
+                .map(|piece| !piece.is_type(t))
+                .unwrap_or_default(),
+            FilterFunction::IsColor(color) => board
+                .get_data(to)
+                .map(|data| &data.color == color)
+                .unwrap_or_default(),
+            FilterFunction::IsNotColor(color) => board
+                .get_data(to)
+                .map(|data| &data.color != color)
+                .unwrap_or_default(),
+            FilterFunction::HasEffect(effect) => board
+                .get_data(to)
+                .map(|data| data.has_effect(effect))
+                .unwrap_or_default(),
+            FilterFunction::Pair(ff1, ff2) => {
+                ff1.filter(board, from, to) && ff2.filter(board, from, to)
+            }
+            FilterFunction::Trio(ff1, ff2, ff3) => {
+                ff1.filter(board, from, to)
+                    && ff2.filter(board, from, to)
+                    && ff3.filter(board, from, to)
+            }
         }
     }
 }

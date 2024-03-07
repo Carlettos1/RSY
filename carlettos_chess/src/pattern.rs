@@ -1,4 +1,4 @@
-use crate::{board::Board, Color, Pos};
+use crate::{board::Board, Color, Pos, SubDirection};
 
 pub fn pawn_move(board: &Board, color: &Color, from: &Pos, to: &Pos) -> bool {
     let (next, next2) = match color {
@@ -17,7 +17,7 @@ pub fn pawn_take(_board: &Board, color: &Color, from: &Pos, to: &Pos) -> bool {
         Color::White => (from.shift(-1, 1), from.shift(1, 1)),
         Color::Black => (from.shift(-1, -1), from.shift(1, -1)),
     };
-    Some(to) == left.as_ref() || Some(to) == right.as_ref()
+    to == &left || to == &right
 }
 
 pub fn knight(from: &Pos, to: &Pos) -> bool {
@@ -67,7 +67,31 @@ pub fn square(from: &Pos, to: &Pos, range: usize) -> bool {
 
 pub fn cross(from: &Pos, to: &Pos, range: usize) -> bool {
     let Pos { x, y } = from.abs_diff(to);
-    (x == 0 || y == 0) && (x <= range || y <= range)
+    (x == 0 || y == 0) && (x + y <= range)
+}
+
+pub fn blockeable_cross(
+    board: &Board,
+    from: &Pos,
+    to: &Pos,
+    color: &Color,
+    range: usize,
+    strength: usize,
+) -> bool {
+    let Pos { x, y } = from.abs_diff(to);
+    if x != 0 && y != 0 {
+        return false;
+    }
+    if x + y > range {
+        return false;
+    }
+    let signx = to.x.cmp(&from.x) as isize;
+    let signy = to.y.cmp(&from.y) as isize;
+    board
+        .ray_cast(from, Some(range), &(signx, signy), |t| {
+            t.piece.is_impenetrable(&strength) && !t.is_controlled_by(color)
+        })
+        .contains(to)
 }
 
 pub fn archer_move(from: &Pos, to: &Pos) -> bool {
@@ -82,6 +106,42 @@ pub fn magician_move(from: &Pos, to: &Pos) -> bool {
 pub fn structure_move(from: &Pos, to: &Pos) -> bool {
     let Pos { x, y } = from.abs_diff(to);
     (x == 0 && y == 1) || (x == 1 && y == 0)
+}
+
+pub fn crazy_pawn(board: &Board, from: &Pos, to: &Pos) -> bool {
+    let subdirection = match (board.rng.movement() * 8.0).floor() as usize {
+        0 => SubDirection::N,
+        1 => SubDirection::NE,
+        2 => SubDirection::E,
+        3 => SubDirection::SE,
+        4 => SubDirection::S,
+        5 => SubDirection::SW,
+        6 => SubDirection::W,
+        7 => SubDirection::NW,
+        _ => panic!("Non 0..8 random number range in crazy pawn movement"),
+    };
+    to == &from.subdirection_shift(&subdirection)
+}
+
+pub fn super_pawn_move(board: &Board, color: &Color, from: &Pos, to: &Pos) -> bool {
+    for i in [-1, 0, 1] {
+        let (next, next2) = match color {
+            Color::White => (from.shift(i, 1), from.shift(i, 2)),
+            Color::Black => (from.shift(i, -1), from.shift(i, -2)),
+        };
+        if to == &next || to == &next2 && next.map(|n| board.is_empty(&n)).unwrap_or_default() {
+            return true;
+        }
+    }
+    false
+}
+
+pub fn super_pawn_take(_board: &Board, color: &Color, from: &Pos, to: &Pos) -> bool {
+    let (left, right, front) = match color {
+        Color::White => (from.shift(-1, 1), from.shift(1, 1), from.shift(0, 1)),
+        Color::Black => (from.shift(-1, -1), from.shift(1, -1), from.shift(0, -1)),
+    };
+    to == &left || to == &right || to == &front
 }
 
 #[cfg(test)]

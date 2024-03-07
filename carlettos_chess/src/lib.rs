@@ -324,6 +324,15 @@ impl Direction {
             Direction::W => SubDirection::W,
         }
     }
+
+    pub fn related_subdirections(&self) -> [SubDirection; 3] {
+        match self {
+            Direction::N => [SubDirection::N, SubDirection::NE, SubDirection::NW],
+            Direction::E => [SubDirection::E, SubDirection::NE, SubDirection::SE],
+            Direction::S => [SubDirection::S, SubDirection::SE, SubDirection::SW],
+            Direction::W => [SubDirection::W, SubDirection::NW, SubDirection::SW],
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -583,7 +592,19 @@ pub enum Color {
 pub enum Info {
     Piece(Piece),
     Direction(Direction),
+    SubDirection(SubDirection),
     Pos(Pos),
+    Integer(usize),
+    Pair(Box<Info>, Box<Info>),
+    Trio(Box<Info>, Box<Info>, Box<Info>),
+    PaladinAbilityInfo(PaladinAbilityType),
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum PaladinAbilityType {
+    Revive(Pos),
+    Invulnerability(Pos),
+    Attack(Pos),
 }
 
 #[cfg(test)]

@@ -1,10 +1,11 @@
 use core::panic;
 
 use crate::{
-    board::{Board, Mana, Tile},
+    board::{Board, Event, EventFunction, FilterFunction, Mana, Tile},
+    card::Card,
     pattern,
-    piece::Piece,
-    Color, Direction, Info, Pos, Time,
+    piece::{Effect, Piece, Type},
+    Color, Direction, Info, PaladinAbilityType, Pos, Time,
 };
 
 pub struct AbilityData {
@@ -224,6 +225,434 @@ impl Ability for King {
 
     fn can_use(board: &Board, from: &Pos, info: &Info) -> bool {
         matches!(info, Info::Pos(to) if pattern::square(from, to, 5) && board.contains(to) && board.get(to).unwrap().is_empty())
+    }
+}
+
+pub struct Builder;
+
+impl Ability for Builder {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(10),
+            cost: Mana(0),
+        }
+    }
+
+    fn can_use(_board: &Board, _from: &Pos, info: &Info) -> bool {
+        matches!(info, Info::Direction(_))
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, info: Info) {
+        if let Info::Direction(dir) = info {
+            let color = board.get(from).unwrap().get_color().unwrap().clone();
+            for subdir in dir.related_subdirections() {
+                if let Some(pos) = from.subdirection_shift(&subdir) {
+                    if let Some(tile) = board.get_mut(&pos) {
+                        if tile.is_empty() {
+                            tile.replace(Piece::wall(color.clone()));
+                        }
+                    }
+                }
+            }
+        } else {
+            panic!("Non direction info")
+        }
+    }
+}
+
+pub struct Catapult;
+
+impl Ability for Catapult {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(2),
+            cost: Mana(0),
+        }
+    }
+
+    fn can_use(board: &Board, from: &Pos, info: &Info) -> bool {
+        match info {
+            Info::Trio(dir, subdir, squares) => {
+                match (dir.as_ref(), subdir.as_ref(), squares.as_ref()) {
+                    (Info::Direction(dir), Info::SubDirection(subdir), Info::Integer(squares)) => {
+                        if let Some(piece_pos) = from.subdirection_shift(subdir) {
+                            if let Some(tile) = board.get(&piece_pos) {
+                                if tile.piece.is_transportable(&5) {
+                                    // TODO: add an attribute to make this dynamic
+                                    let (x, y): (isize, isize) = (dir).into();
+                                    let to =
+                                        from.shift(x * *squares as isize, y * *squares as isize);
+                                    if let Some(to) = to {
+                                        if board
+                                            .get(&to)
+                                            .map(|tile| tile.is_empty())
+                                            .unwrap_or_default()
+                                        {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        false
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, info: Info) {
+        match info {
+            Info::Trio(dir, subdir, squares) => match (*dir, *subdir, *squares) {
+                (Info::Direction(dir), Info::SubDirection(subdir), Info::Integer(squares)) => {
+                    let piece_pos = from.subdirection_shift(&subdir).unwrap();
+                    let piece = board.get_mut(&piece_pos).unwrap().remove();
+
+                    let (x, y): (isize, isize) = (&dir).into();
+                    let to = from
+                        .shift(x * squares as isize, y * squares as isize)
+                        .unwrap();
+                    board.get_mut(&to).unwrap().replace(piece);
+                }
+                _ => panic!("non (dir, subdir) info for catapult ability"),
+            },
+            _ => panic!("non pair info for catapult ability"),
+        }
+    }
+}
+
+pub struct CrazyPawn;
+
+impl Ability for CrazyPawn {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::default(),
+            cost: Mana(0),
+        }
+    }
+
+    fn can_use(_board: &Board, _from: &Pos, _info: &Info) -> bool {
+        true
+    }
+
+    fn r#use(board: &mut Board, _from: &Pos, _info: Info) {
+        let player_id = *board.current_player().id();
+        board.add_event(Event::new(
+            "Crazy Pawn Cards!".to_string(),
+            vec![
+                EventFunction::TakeCard(player_id),
+                EventFunction::TakeCard(player_id),
+                EventFunction::ShuffleDeck(player_id),
+            ],
+        ))
+    }
+}
+
+pub struct Magician;
+
+impl Ability for Magician {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(6),
+            cost: Mana(2),
+        }
+    }
+
+    fn can_use(board: &Board, _from: &Pos, _info: &Info) -> bool {
+        board.has_any_card_on_board(vec![Card::Ice, Card::Fire])
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, _info: Info) {
+        let has_ice = board.has_card_on_board(Card::Ice);
+        let has_fire = board.has_card_on_board(Card::Fire);
+        board
+            .iter_mut_from_pattern(from, |from, to| pattern::square(from, to, 4))
+            .for_each(|tile| {
+                if let Some(data) = tile.piece.mut_data() {
+                    if has_fire {
+                        data.add_effect(Effect::fire());
+                    }
+                    if has_ice {
+                        data.add_effect(Effect::ice());
+                    }
+                }
+            })
+    }
+}
+
+pub struct Paladin;
+
+impl Ability for Paladin {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(8),
+            cost: Mana(2),
+        }
+    }
+
+    fn can_use(board: &Board, from: &Pos, info: &Info) -> bool {
+        match info {
+            Info::PaladinAbilityInfo(ability_type) => match ability_type {
+                PaladinAbilityType::Attack(to) => {
+                    board.has_card_on_board(Card::AttackDemonic)
+                        && !board.is_empty(to)
+                        && !board.same_color(from, to)
+                }
+                PaladinAbilityType::Invulnerability(to) => {
+                    board.has_card_on_board(Card::Invulnerability)
+                        && !board.is_empty(to)
+                        && board.same_color(from, to)
+                }
+                PaladinAbilityType::Revive(to) => {
+                    board.has_card_on_board(Card::Revive) && board.is_empty(to)
+                }
+            },
+            _ => false,
+        }
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, info: Info) {
+        if let Info::PaladinAbilityInfo(ability_type) = info {
+            match ability_type {
+                PaladinAbilityType::Attack(to) => board.attack_piece(from, &to),
+                PaladinAbilityType::Invulnerability(to) => board
+                    .get_mut_data(&to)
+                    .unwrap()
+                    .add_effect(Effect::Invulnerability(Time::rounds(5))),
+                PaladinAbilityType::Revive(to) => {
+                    let self_color = board.get_data(from).unwrap().color.clone();
+                    let revived_piece = board.remove_last_dead_with_color(&self_color);
+                    board.get_mut(&to).unwrap().replace(revived_piece);
+                }
+            }
+        } else {
+            panic!("Non paladin ability info in paladin ability")
+        }
+    }
+}
+
+pub struct Ram;
+
+impl Ability for Ram {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::turns(4),
+            cost: Mana(0),
+        }
+    }
+
+    fn can_use(_board: &Board, _from: &Pos, info: &Info) -> bool {
+        matches!(info, Info::Direction(_))
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, info: Info) {
+        if let Info::Direction(direction) = info {
+            let strength = &board.get_data(from).unwrap().get_strength();
+            let raycast = board.ray_cast(from, None, &(&direction).into(), |tile| {
+                tile.has_piece() || tile.piece.is_impenetrable(strength)
+            });
+
+            if let Some(ref collision) = raycast.collision {
+                let charge = raycast.len() / 5 + 1;
+                // if collision is impenetrable, just stay in front of that piece
+                // either, kill that piece and continue until charge is 0 or the next piece is impenetrable
+                if board
+                    .get(collision)
+                    .unwrap()
+                    .piece
+                    .is_impenetrable(strength)
+                {
+                    let ram = board.get_mut(from).unwrap().remove();
+                    board.get_mut(raycast.last().unwrap()).unwrap().replace(ram);
+                } else {
+                    let ram = board.get_mut(from).unwrap().remove();
+                    let mut to = collision.clone();
+                    board.attack_piece(from, collision);
+                    for i in 0..charge {
+                        let prev = to.clone();
+                        to = to.direction_shift(&direction).unwrap();
+                        if board.get(&to).unwrap().piece.is_impenetrable(strength) {
+                            board.get_mut(&prev).unwrap().replace(ram);
+                            break;
+                        }
+                        board.attack_piece(from, &to);
+                        if i == charge - 1 {
+                            board.get_mut(&to).unwrap().replace(ram);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // no colission, put the ram at the last position (the edge of the board)
+                let ram = board.get_mut(from).unwrap().remove();
+                board.get_mut(raycast.last().unwrap()).unwrap().replace(ram);
+            }
+        } else {
+            panic!("Non direction info for ram")
+        }
+    }
+}
+
+/// The ability of the Shield Bearer is to give nearby allies the impeneatrable Type.
+pub struct ShieldBearer;
+
+impl Ability for ShieldBearer {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(15),
+            cost: Mana(0),
+        }
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, _info: Info) {
+        board
+            .tiles
+            .iter_mut()
+            .filter(|tile| pattern::king(from, tile.pos()))
+            .for_each(|tile| {
+                tile.piece.add_type(Type::Impenetrable(1)); // TODO: add type or add to type
+            });
+    }
+
+    fn can_use(_board: &Board, _from: &Pos, _info: &Info) -> bool {
+        true
+    }
+}
+
+pub struct Ship;
+
+impl Ability for Ship {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(12),
+            cost: Mana(0),
+        }
+    }
+
+    fn can_use(_board: &Board, _from: &Pos, _info: &Info) -> bool {
+        true
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, _info: Info) {
+        for subdir in vec![
+            Direction::E
+                .related_subdirections()
+                .into_iter()
+                .collect::<Vec<_>>(),
+            Direction::W
+                .related_subdirections()
+                .into_iter()
+                .collect::<Vec<_>>(),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            if let Some(attack_point) = from.subdirection_shift(&subdir) {
+                board.attack_piece(from, &attack_point);
+            }
+        }
+    }
+}
+
+pub struct SuperPawn;
+
+impl Ability for SuperPawn {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(10),
+            cost: Mana(0),
+        }
+    }
+
+    fn can_use(board: &Board, from: &Pos, _info: &Info) -> bool {
+        let piece = &board.get(from).unwrap().piece;
+        !piece.is_immune() && !piece.is_impenetrable(&10)
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, _info: Info) {
+        let piece = &mut board.get_mut(from).unwrap().piece;
+        piece.add_type(Type::Immune);
+        piece.add_type(Type::Impenetrable(10))
+    }
+}
+
+pub struct TeslaTower;
+
+impl Ability for TeslaTower {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(10),
+            cost: Mana(1),
+        }
+    }
+
+    fn can_use(_board: &Board, _from: &Pos, _info: &Info) -> bool {
+        true
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, _info: Info) {
+        let color = &board.get_data(from).unwrap().color;
+        board.add_event(Event::full(
+            "Tesla Tower Ability".to_string(),
+            Time::turns(2),
+            from.clone(),
+            vec![EventFunction::ApplyEffect(
+                Effect::Deactivate(Time::rounds(6)),
+                from.clone(),
+                FilterFunction::trio(
+                    FilterFunction::Square(3),
+                    FilterFunction::IsType(Type::Structure),
+                    FilterFunction::IsNotColor(color.clone()),
+                ),
+            )],
+        ))
+    }
+}
+
+pub struct Warlock;
+
+impl Ability for Warlock {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::rounds(5),
+            cost: Mana(3),
+        }
+    }
+
+    fn can_use(board: &Board, from: &Pos, _info: &Info) -> bool {
+        board
+            .iter_from_pattern(from, pattern::king)
+            .any(|tile| tile.is_empty() && tile.buildable && tile.magic)
+    }
+
+    fn r#use(board: &mut Board, from: &Pos, _info: Info) {
+        let color = board.get(from).unwrap().piece.color().unwrap().clone();
+        for tile in board.iter_mut_from_pattern(from, pattern::king) {
+            if tile.is_empty() && tile.buildable && tile.magic {
+                tile.replace(Piece::portal(color.clone()));
+            }
+        }
+    }
+}
+
+pub struct Portal;
+
+impl Ability for Portal {
+    fn data(&self) -> AbilityData {
+        AbilityData {
+            cooldown: Time::turns(1),
+            cost: Mana(0),
+        }
+    }
+
+    fn can_use(_board: &Board, _from: &Pos, _info: &Info) -> bool {
+        true
+    }
+
+    fn r#use(_board: &mut Board, _from: &Pos, _info: Info) {
+        unimplemented!("portal::use not implemented yet")
     }
 }
 
