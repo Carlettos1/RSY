@@ -1,6 +1,6 @@
 target/
 .trunk/
-carlettos_web/dist/
+carlettos_web/dist/*
 log.*
 db/storage/
 */history.txt
