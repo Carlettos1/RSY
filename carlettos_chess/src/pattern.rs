@@ -121,6 +121,10 @@ pub fn crazy_pawn(board: &Board, from: &Pos, to: &Pos) -> bool {
         _ => panic!("Non 0..8 random number range in crazy pawn movement"),
     };
     to == &from.subdirection_shift(&subdirection)
+        || to
+            == &from
+                .subdirection_shift(&subdirection)
+                .and_then(|pos| pos.subdirection_shift(&subdirection))
 }
 
 pub fn super_pawn_move(board: &Board, color: &Color, from: &Pos, to: &Pos) -> bool {

@@ -64,6 +64,20 @@ impl PieceData {
     pub fn has_effect(&self, effect: &Effect) -> bool {
         self.effects.0.contains(effect)
     }
+
+    /// Tick this PieceData, the time param should be ONLY a round, turn or movement. This method doesn't handle mixes of times.
+    pub fn tick(&mut self, time: &Time) {
+        self.effects.pre_tick(time);
+        if time.is_movement() {
+            self.cooldown.on_movement();
+        } else if time.is_turn() {
+            self.moved = false;
+            self.cooldown.on_turn();
+        } else if time.is_round() {
+            self.cooldown.on_round();
+        }
+        self.effects.post_tick(time);
+    }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq, Eq)]
@@ -98,6 +112,7 @@ pub enum Piece {
 
     // Demonic pieces
     Portal(PieceData),
+    // TODO: golem and necromancer images
 }
 
 impl Piece {
@@ -182,6 +197,12 @@ impl Piece {
             Piece::Wall(data) => Some(data),
             Piece::Warlock(data) => Some(data),
             Piece::Portal(data) => Some(data),
+        }
+    }
+
+    pub fn tick(&mut self, time: &Time) {
+        if let Some(data) = self.mut_data() {
+            data.tick(time);
         }
     }
 
@@ -458,7 +479,7 @@ impl Piece {
                             ability::SuperPawn::can_use(board, &from, &info)
                         }
                         (Piece::TeslaTower(_), Action::Move { from, to }) => {
-                            pattern::magician_move(&from, &to)
+                            pattern::structure_move(&from, &to)
                         }
                         (Piece::TeslaTower(_), Action::Take { from, to }) => {
                             pattern::structure_move(&from, &to)
@@ -861,6 +882,34 @@ impl Effect {
             Effect::Invulnerability(_) => (),
         }
     }
+
+    pub fn pre_tick(&mut self, time: &Time) {
+        let cd = match self {
+            Effect::Deactivate(time) => time,
+            Effect::Fire(time) => time,
+            Effect::Ice(time) => time,
+            Effect::Invulnerability(time) => time,
+        };
+
+        if time.is_movement() {
+            cd.on_movement();
+        } else if time.is_turn() {
+            cd.on_turn();
+        } else if time.is_round() {
+            cd.on_round();
+        }
+    }
+
+    pub fn post_tick(&mut self, time: &Time) {
+        match self {
+            Effect::Deactivate(_) => (),
+            Effect::Fire(time) => {
+                // TODO: this should kill the piece
+            }
+            Effect::Ice(_) => (),
+            Effect::Invulnerability(_) => (),
+        }
+    }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq, Eq)]
@@ -916,6 +965,14 @@ impl Effects {
 
     pub fn on_be(&self, action: &Action) {
         self.0.iter().for_each(|e| e.on_do(action))
+    }
+
+    pub fn pre_tick(&mut self, time: &Time) {
+        self.0.iter_mut().for_each(|e| e.pre_tick(time))
+    }
+
+    pub fn post_tick(&mut self, time: &Time) {
+        self.0.iter_mut().for_each(|e| e.post_tick(time))
     }
 }
 

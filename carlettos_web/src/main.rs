@@ -9,6 +9,7 @@ mod sub_api;
 mod pages {
     mod carlettos_chess;
     mod chess;
+    mod currently_programming;
     mod game_of_life;
     mod home;
     mod page_not_found;
@@ -16,6 +17,7 @@ mod pages {
 
     pub use carlettos_chess::*;
     pub use chess::*;
+    pub use currently_programming::*;
     pub use game_of_life::*;
     pub use home::*;
     pub use page_not_found::*;
@@ -52,6 +54,8 @@ pub enum Route {
     Home,
     #[at("/carlettos_chess")]
     CarlettosChess,
+    #[at("/currently_programming")]
+    CurrentlyProgramming,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -130,6 +134,9 @@ impl App {
                         <Link<Route> classes={classes!("navbar-item")} to={Route::CarlettosChess}>
                             { "Carlettos' Chess" }
                         </Link<Route>>
+                        <Link<Route> classes={classes!("navbar-item")} to={Route::CurrentlyProgramming}>
+                            { "Currently Programming" }
+                        </Link<Route>>
 
                         <div class="navbar-item has-dropdown is-hoverable">
                             <div class="navbar-link">
@@ -173,6 +180,9 @@ fn switch(routes: Route) -> Html {
         }
         Route::CarlettosChess => {
             html! { <CarlettosChess /> }
+        }
+        Route::CurrentlyProgramming => {
+            html! { <CurrentlyProgramming /> }
         }
     }
 }

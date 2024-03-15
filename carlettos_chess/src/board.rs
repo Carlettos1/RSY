@@ -7,7 +7,7 @@ use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    card::{Card, Cards},
+    card::{Card, CardPlace, Cards},
     pattern,
     piece::{Effect, Piece, PieceData, Type},
     Action, Color, Pos, Time,
@@ -141,6 +141,15 @@ impl Player {
             None => Err(EventFunctionError::EmptyDeck),
         }
     }
+
+    pub fn tick(&mut self, time: &Time) {
+        if time.is_round() {
+            self.mana += Mana(1);
+        }
+        self.discard_pile.tick(time, CardPlace::DiscardPile);
+        self.deck.tick(time, CardPlace::Deck);
+        self.hand.tick(time, CardPlace::Hand);
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
@@ -220,6 +229,10 @@ impl Tile {
     pub fn has_ballista(&self) -> bool {
         matches!(self.piece, Piece::Ballista(_))
     }
+
+    pub fn tick(&mut self, time: &Time) {
+        self.piece.tick(time);
+    }
 }
 
 pub mod shape {
@@ -287,6 +300,14 @@ pub mod shape {
     impl Shape {
         pub fn new(squares: Vec<Square>) -> Self {
             Self { squares }
+        }
+
+        pub fn cchessboard() -> Self {
+            Shape::new(vec![Square {
+                anchor: Pos::new(0, 0),
+                width: 16,
+                height: 17,
+            }])
         }
 
         pub fn default_chessboard() -> Self {
@@ -493,6 +514,429 @@ impl Board {
         default
     }
 
+    pub fn cchessboard() -> Self {
+        let mut white: Player = Player::new(
+            Color::White,
+            0,
+            Cards(vec![
+                Card::AddMovement,
+                Card::AddMovement,
+                Card::AddMovement,
+            ]),
+        );
+        white.hand.add(Card::AddMovement);
+        white.mana = Mana(5);
+
+        let mut black = white.clone();
+        black.color = Color::Black;
+        black.id = 1;
+
+        let shape = Shape::cchessboard();
+        let mut board = Self {
+            tiles: shape.points_iter().map(Tile::new).collect(),
+            players: vec![white, black],
+            shape,
+            ..Default::default()
+        };
+        board.get_mut(&Pos::new(0, 7)).unwrap().magic = true;
+        board.get_mut(&Pos::new(0, 9)).unwrap().magic = true;
+        board.get_mut(&Pos::new(15, 7)).unwrap().magic = true;
+        board.get_mut(&Pos::new(15, 9)).unwrap().magic = true;
+
+        board
+            .get_mut(&Pos::new(0, 0))
+            .unwrap()
+            .replace(Piece::cannon(Color::White));
+        board
+            .get_mut(&Pos::new(15, 0))
+            .unwrap()
+            .replace(Piece::cannon(Color::White));
+        board
+            .get_mut(&Pos::new(0, 16))
+            .unwrap()
+            .replace(Piece::cannon(Color::Black));
+        board
+            .get_mut(&Pos::new(15, 16))
+            .unwrap()
+            .replace(Piece::cannon(Color::Black));
+
+        board
+            .get_mut(&Pos::new(1, 0))
+            .unwrap()
+            .replace(Piece::rook(Color::White));
+        board
+            .get_mut(&Pos::new(14, 0))
+            .unwrap()
+            .replace(Piece::rook(Color::White));
+        board
+            .get_mut(&Pos::new(1, 16))
+            .unwrap()
+            .replace(Piece::rook(Color::Black));
+        board
+            .get_mut(&Pos::new(14, 16))
+            .unwrap()
+            .replace(Piece::rook(Color::Black));
+
+        board
+            .get_mut(&Pos::new(2, 0))
+            .unwrap()
+            .replace(Piece::catapult(Color::White));
+        board
+            .get_mut(&Pos::new(13, 0))
+            .unwrap()
+            .replace(Piece::catapult(Color::White));
+        board
+            .get_mut(&Pos::new(2, 16))
+            .unwrap()
+            .replace(Piece::catapult(Color::Black));
+        board
+            .get_mut(&Pos::new(13, 16))
+            .unwrap()
+            .replace(Piece::catapult(Color::Black));
+
+        board
+            .get_mut(&Pos::new(3, 0))
+            .unwrap()
+            .replace(Piece::knight(Color::White));
+        board
+            .get_mut(&Pos::new(12, 0))
+            .unwrap()
+            .replace(Piece::knight(Color::White));
+        board
+            .get_mut(&Pos::new(3, 16))
+            .unwrap()
+            .replace(Piece::knight(Color::Black));
+        board
+            .get_mut(&Pos::new(12, 16))
+            .unwrap()
+            .replace(Piece::knight(Color::Black));
+
+        board
+            .get_mut(&Pos::new(4, 0))
+            .unwrap()
+            .replace(Piece::warlock(Color::White));
+        board
+            .get_mut(&Pos::new(11, 0))
+            .unwrap()
+            .replace(Piece::warlock(Color::White));
+        board
+            .get_mut(&Pos::new(4, 16))
+            .unwrap()
+            .replace(Piece::warlock(Color::Black));
+        board
+            .get_mut(&Pos::new(11, 16))
+            .unwrap()
+            .replace(Piece::warlock(Color::Black));
+
+        board
+            .get_mut(&Pos::new(5, 0))
+            .unwrap()
+            .replace(Piece::bishop(Color::White));
+        board
+            .get_mut(&Pos::new(10, 0))
+            .unwrap()
+            .replace(Piece::bishop(Color::White));
+        board
+            .get_mut(&Pos::new(5, 16))
+            .unwrap()
+            .replace(Piece::bishop(Color::Black));
+        board
+            .get_mut(&Pos::new(10, 16))
+            .unwrap()
+            .replace(Piece::bishop(Color::Black));
+
+        board
+            .get_mut(&Pos::new(6, 0))
+            .unwrap()
+            .replace(Piece::magician(Color::White));
+        board
+            .get_mut(&Pos::new(7, 0))
+            .unwrap()
+            .replace(Piece::queen(Color::White));
+        board
+            .get_mut(&Pos::new(8, 0))
+            .unwrap()
+            .replace(Piece::king(Color::White));
+        board
+            .get_mut(&Pos::new(9, 0))
+            .unwrap()
+            .replace(Piece::paladin(Color::White));
+
+        board
+            .get_mut(&Pos::new(6, 16))
+            .unwrap()
+            .replace(Piece::magician(Color::Black));
+        board
+            .get_mut(&Pos::new(7, 16))
+            .unwrap()
+            .replace(Piece::queen(Color::Black));
+        board
+            .get_mut(&Pos::new(8, 16))
+            .unwrap()
+            .replace(Piece::king(Color::Black));
+        board
+            .get_mut(&Pos::new(9, 16))
+            .unwrap()
+            .replace(Piece::paladin(Color::Black));
+
+        board
+            .get_mut(&Pos::new(0, 1))
+            .unwrap()
+            .replace(Piece::ship(Color::White));
+        board
+            .get_mut(&Pos::new(15, 1))
+            .unwrap()
+            .replace(Piece::ship(Color::White));
+        board
+            .get_mut(&Pos::new(0, 15))
+            .unwrap()
+            .replace(Piece::ship(Color::Black));
+        board
+            .get_mut(&Pos::new(15, 15))
+            .unwrap()
+            .replace(Piece::ship(Color::Black));
+
+        board
+            .get_mut(&Pos::new(1, 1))
+            .unwrap()
+            .replace(Piece::tesla_tower(Color::White));
+        board
+            .get_mut(&Pos::new(14, 1))
+            .unwrap()
+            .replace(Piece::tesla_tower(Color::White));
+        board
+            .get_mut(&Pos::new(1, 15))
+            .unwrap()
+            .replace(Piece::tesla_tower(Color::Black));
+        board
+            .get_mut(&Pos::new(14, 15))
+            .unwrap()
+            .replace(Piece::tesla_tower(Color::Black));
+
+        board
+            .get_mut(&Pos::new(2, 1))
+            .unwrap()
+            .replace(Piece::ram(Color::White));
+        board
+            .get_mut(&Pos::new(13, 1))
+            .unwrap()
+            .replace(Piece::ram(Color::White));
+        board
+            .get_mut(&Pos::new(2, 15))
+            .unwrap()
+            .replace(Piece::ram(Color::Black));
+        board
+            .get_mut(&Pos::new(13, 15))
+            .unwrap()
+            .replace(Piece::ram(Color::Black));
+
+        board
+            .get_mut(&Pos::new(3, 1))
+            .unwrap()
+            .replace(Piece::builder(Color::White));
+        board
+            .get_mut(&Pos::new(12, 1))
+            .unwrap()
+            .replace(Piece::builder(Color::White));
+        board
+            .get_mut(&Pos::new(3, 15))
+            .unwrap()
+            .replace(Piece::builder(Color::Black));
+        board
+            .get_mut(&Pos::new(12, 15))
+            .unwrap()
+            .replace(Piece::builder(Color::Black));
+
+        board
+            .get_mut(&Pos::new(4, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(11, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(4, 15))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(11, 15))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+
+        board
+            .get_mut(&Pos::new(5, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(10, 1))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(5, 15))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(10, 15))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+
+        board
+            .get_mut(&Pos::new(6, 1))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::White));
+        board
+            .get_mut(&Pos::new(9, 1))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::White));
+        board
+            .get_mut(&Pos::new(6, 15))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(9, 15))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::Black));
+
+        board
+            .get_mut(&Pos::new(7, 1))
+            .unwrap()
+            .replace(Piece::super_pawn(Color::White));
+        board
+            .get_mut(&Pos::new(8, 1))
+            .unwrap()
+            .replace(Piece::super_pawn(Color::White));
+        board
+            .get_mut(&Pos::new(7, 15))
+            .unwrap()
+            .replace(Piece::super_pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(8, 15))
+            .unwrap()
+            .replace(Piece::super_pawn(Color::Black));
+
+        board
+            .get_mut(&Pos::new(0, 2))
+            .unwrap()
+            .replace(Piece::ballista(Color::White));
+        board
+            .get_mut(&Pos::new(15, 2))
+            .unwrap()
+            .replace(Piece::ballista(Color::White));
+        board
+            .get_mut(&Pos::new(0, 14))
+            .unwrap()
+            .replace(Piece::ballista(Color::Black));
+        board
+            .get_mut(&Pos::new(15, 14))
+            .unwrap()
+            .replace(Piece::ballista(Color::Black));
+
+        board
+            .get_mut(&Pos::new(1, 2))
+            .unwrap()
+            .replace(Piece::archer(Color::White));
+        board
+            .get_mut(&Pos::new(14, 2))
+            .unwrap()
+            .replace(Piece::archer(Color::White));
+        board
+            .get_mut(&Pos::new(1, 14))
+            .unwrap()
+            .replace(Piece::archer(Color::Black));
+        board
+            .get_mut(&Pos::new(14, 14))
+            .unwrap()
+            .replace(Piece::archer(Color::Black));
+
+        board
+            .get_mut(&Pos::new(2, 2))
+            .unwrap()
+            .replace(Piece::archer(Color::White));
+        board
+            .get_mut(&Pos::new(13, 2))
+            .unwrap()
+            .replace(Piece::archer(Color::White));
+        board
+            .get_mut(&Pos::new(2, 14))
+            .unwrap()
+            .replace(Piece::archer(Color::Black));
+        board
+            .get_mut(&Pos::new(13, 14))
+            .unwrap()
+            .replace(Piece::archer(Color::Black));
+
+        board
+            .get_mut(&Pos::new(3, 2))
+            .unwrap()
+            .replace(Piece::shield_bearer(Color::White));
+        board
+            .get_mut(&Pos::new(12, 2))
+            .unwrap()
+            .replace(Piece::shield_bearer(Color::White));
+        board
+            .get_mut(&Pos::new(3, 14))
+            .unwrap()
+            .replace(Piece::shield_bearer(Color::Black));
+        board
+            .get_mut(&Pos::new(12, 14))
+            .unwrap()
+            .replace(Piece::shield_bearer(Color::Black));
+
+        board
+            .get_mut(&Pos::new(0, 3))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(15, 3))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(0, 13))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(15, 13))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+
+        board
+            .get_mut(&Pos::new(1, 3))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::White));
+        board
+            .get_mut(&Pos::new(14, 3))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::White));
+        board
+            .get_mut(&Pos::new(1, 13))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(14, 13))
+            .unwrap()
+            .replace(Piece::crazy_pawn(Color::Black));
+
+        board
+            .get_mut(&Pos::new(2, 3))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(13, 3))
+            .unwrap()
+            .replace(Piece::pawn(Color::White));
+        board
+            .get_mut(&Pos::new(2, 13))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+        board
+            .get_mut(&Pos::new(13, 13))
+            .unwrap()
+            .replace(Piece::pawn(Color::Black));
+
+        board
+    }
+
     pub fn with_shape(shape: Shape) -> Self {
         Self {
             tiles: shape.points_iter().map(Tile::new).collect(),
@@ -688,16 +1132,67 @@ impl Board {
         }
     }
 
+    ///
+    /// This tick the entire board, ticking one movement to all the things.
+    /// If the movement is the last one of the current player, then ticks one turn to all the things.
+    /// If the turn is the turn of the last player, then ticks one round to all the things.
+    ///
+    /// The order of ticking is:
+    ///
+    /// Tiles
+    /// -> Piece
+    /// --> PieceData
+    /// ---> Effects::pre_tick
+    /// ---> Cooldown
+    /// ---> Effects::post_tick
+    /// Current Player (if round tick, then all the players)
+    /// -> Mana (if round tick)
+    /// -> DiscardPile
+    /// -> Deck
+    /// -> Hand
+    /// Board Cards
+    /// Events
+    /// RNG
+    ///
     pub fn tick(&mut self) {
-        // add movement, tick everything on movement
-        // if movement == current_player.max_movements, add turn, tick turn
-        // if turn == players.len(), add round, tick round
-        // TODO: TICK
-        // tick pieces
-        // tick rng
-        // tick effects
-        // tick types
-        // tick cards
+        let movement = Time::movements(1);
+        let turn = Time::turns(1);
+        let round = Time::rounds(1);
+
+        log::info!("movement tick");
+        self.time.movement += 1;
+        self.iter_mut().for_each(|tile| tile.tick(&movement));
+        self.mut_current_player().tick(&movement);
+        self.cards.tick(&movement, CardPlace::OnBoard);
+        self.events.tick(&movement);
+        self.rng.next_movement();
+
+        if self.time.movement == self.current_player().movements.0 {
+            log::info!("turn tick");
+            self.time.movement = 0;
+            let current_player_i = self.current_player().id;
+            self.time.turn += 1;
+            self.iter_mut().for_each(|tile| tile.tick(&turn));
+            self.mut_player_from_id(current_player_i)
+                .unwrap()
+                .tick(&turn);
+            self.cards.tick(&turn, CardPlace::OnBoard);
+            self.events.tick(&turn);
+            self.rng.next_turn();
+
+            if self.time.turn == self.players.len() {
+                log::info!("round tick");
+                self.time.turn = 0;
+                self.time.round += 1;
+                self.iter_mut().for_each(|tile| tile.tick(&round));
+                self.players
+                    .iter_mut()
+                    .for_each(|player| player.tick(&round));
+                self.cards.tick(&round, CardPlace::OnBoard);
+                self.events.tick(&round);
+                self.rng.next_round();
+            }
+        }
     }
 
     pub fn player_from_id(&self, player_id: usize) -> Option<&Player> {
@@ -722,6 +1217,10 @@ impl Board {
 
     pub fn current_player(&self) -> &Player {
         &self.players[self.time.turn]
+    }
+
+    pub fn mut_current_player(&mut self) -> &mut Player {
+        &mut self.players[self.time.turn]
     }
 
     pub fn add_event(&mut self, event: Event) {
@@ -1011,6 +1510,12 @@ pub struct Events {
     events: Vec<Event>,
 }
 
+impl Events {
+    pub fn tick(&mut self, time: &Time) {
+        self.events.iter_mut().for_each(|event| event.tick(time));
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct Event {
     name: String,
@@ -1053,6 +1558,16 @@ impl Event {
             time,
             pos: Some(pos),
             functions,
+        }
+    }
+
+    pub fn tick(&mut self, time: &Time) {
+        if time.is_movement() {
+            self.time.on_movement();
+        } else if time.is_turn() {
+            self.time.on_turn();
+        } else if time.is_round() {
+            self.time.on_round();
         }
     }
 }

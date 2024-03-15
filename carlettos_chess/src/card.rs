@@ -1,7 +1,7 @@
 use rand::{seq::SliceRandom, thread_rng};
 use serde::{Deserialize, Serialize};
 
-use crate::board::Mana;
+use crate::{board::Mana, Time};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub enum Card {
@@ -15,8 +15,10 @@ pub enum Card {
     AttackDemonic,
     Invulnerability,
     Revive,
+    MoreMana,
     // Utility
     AddMovement,
+    Mana,
 }
 
 impl Card {
@@ -31,7 +33,18 @@ impl Card {
             Card::Invulnerability => 5,
             Card::Revive => 4,
             Card::AddMovement => 1,
+            Card::MoreMana => 2,
+            Card::Mana => 1,
         })
+    }
+
+    pub fn tick(&mut self, time: &Time, place: &CardPlace) {
+        match (self, place) {
+            (Card::MoreMana, CardPlace::OnBoard) if time.is_round() => {
+                // TODO: this should give 1 more mana every turn
+            }
+            _ => (),
+        }
     }
 }
 
@@ -62,4 +75,15 @@ impl Cards {
     pub fn shuffle(&mut self) {
         self.0.shuffle(&mut thread_rng());
     }
+
+    pub fn tick(&mut self, time: &Time, place: CardPlace) {
+        self.0.iter_mut().for_each(|card| card.tick(time, &place));
+    }
+}
+
+pub enum CardPlace {
+    DiscardPile,
+    OnBoard,
+    Hand,
+    Deck,
 }

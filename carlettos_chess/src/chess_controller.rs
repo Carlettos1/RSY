@@ -67,14 +67,21 @@ impl CChess {
                 self.selected = Some(click_pos);
             }
             Some(selected_pos) => {
+                let mut tick = false;
                 if self.attacks.contains(&click_pos) {
                     self.board.make(Action::attack(selected_pos, &click_pos));
+                    tick = true;
                 } else if self.takes.contains(&click_pos) {
                     self.board.make(Action::take(selected_pos, &click_pos));
+                    tick = true;
                 } else if self.moves.contains(&click_pos) {
                     self.board.make(Action::r#move(selected_pos, &click_pos));
+                    tick = true;
                 }
                 //TODO: handle ability
+                if tick {
+                    self.board.tick();
+                }
                 self.clear();
             }
         }
@@ -330,6 +337,13 @@ impl CChess {
     pub fn default_chessboard() -> Self {
         Self {
             board: Board::default_chessboard(),
+            ..Default::default()
+        }
+    }
+
+    pub fn cchessboard() -> Self {
+        Self {
+            board: Board::cchessboard(),
             ..Default::default()
         }
     }

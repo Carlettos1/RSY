@@ -147,6 +147,7 @@ pub fn chess() -> Html {
                 <button onclick={on_button_click}>{ "Start" }</button>
             </header>
             <ChessPiecesDisplay display={chess.display.clone()} on_click={on_display_click} />
+            <AboveChessHUD board={chess.board.board.clone()}/>
             <section class={classes!("carlettos-chess-board")}>
                 { for rows }
             </section>
@@ -184,6 +185,25 @@ pub fn chess_pieces_display(
         <div>
             <div class={classes!("carlettos-chess-board", "cchess-display")}>
                 { for rows }
+            </div>
+        </div>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct AboveChessHUDProp {
+    board: Board,
+}
+
+#[function_component(AboveChessHUD)]
+pub fn above_chess_hud(AboveChessHUDProp { board }: &AboveChessHUDProp) -> Html {
+    html! {
+        <div class={classes!("above-chess-hud")}>
+            <h1> { format!("Movement: {}, Turn: {}, Round: {}", board.time.movement + 1, board.time.turn + 1, board.time.round + 1) } </h1>
+            <h1> { format!("{:?} player's turn (movement {} of {})", board.current_player().color(), board.time.movement + 1, board.current_player().movements.0) } </h1>
+            <div>
+                <div> { format!("Mana: {}", "*".repeat(board.current_player().mana.0)) } </div>
+                <button> { "Ability?" } </button>
             </div>
         </div>
     }

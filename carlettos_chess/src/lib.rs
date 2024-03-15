@@ -507,6 +507,22 @@ impl Time {
     pub fn on_movement(&mut self) {
         self.movement = self.movement.checked_sub(1).unwrap_or_default();
     }
+
+    pub fn is_zero(&self) -> bool {
+        self.movement == 0 && self.turn == 0 && self.round == 0
+    }
+
+    pub fn is_round(&self) -> bool {
+        self.round != 0 && self.turn == 0 && self.movement == 0
+    }
+
+    pub fn is_turn(&self) -> bool {
+        self.turn != 0 && self.round == 0 && self.movement == 0
+    }
+
+    pub fn is_movement(&self) -> bool {
+        self.movement != 0 && self.turn == 0 && self.round == 0
+    }
 }
 
 impl Sub for Time {

@@ -58,13 +58,12 @@ impl Reducible for CarlettosChessState {
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
             CarlettosChessAction::Start => Self {
-                board: CChess::default_chessboard(),
+                board: CChess::cchessboard(),
                 display: CChess::default_display(),
             },
             CarlettosChessAction::OnClick(pos) => {
                 let mut board = self.board.clone();
                 let mut display = self.display.clone();
-                log::info!("display selected: {:?}", display.selected);
                 match display.selected {
                     Some(dis) => {
                         // put the selected piece into the board
