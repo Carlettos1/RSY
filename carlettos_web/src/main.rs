@@ -7,6 +7,7 @@ mod state;
 mod sub_api;
 
 mod pages {
+    mod c2048;
     mod carlettos_chess;
     mod chess;
     mod currently_programming;
@@ -15,6 +16,7 @@ mod pages {
     mod page_not_found;
     mod todo_app;
 
+    pub use c2048::*;
     pub use carlettos_chess::*;
     pub use chess::*;
     pub use currently_programming::*;
@@ -56,6 +58,8 @@ pub enum Route {
     CarlettosChess,
     #[at("/currently_programming")]
     CurrentlyProgramming,
+    #[at("/c2048")]
+    C2048,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -137,6 +141,9 @@ impl App {
                         <Link<Route> classes={classes!("navbar-item")} to={Route::CurrentlyProgramming}>
                             { "Currently Programming" }
                         </Link<Route>>
+                        <Link<Route> classes={classes!("navbar-item")} to={Route::C2048}>
+                            { "2048!" }
+                        </Link<Route>>
 
                         <div class="navbar-item has-dropdown is-hoverable">
                             <div class="navbar-link">
@@ -183,6 +190,9 @@ fn switch(routes: Route) -> Html {
         }
         Route::CurrentlyProgramming => {
             html! { <CurrentlyProgramming /> }
+        }
+        Route::C2048 => {
+            html! { <C2048 /> }
         }
     }
 }
