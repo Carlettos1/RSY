@@ -63,11 +63,12 @@ pub async fn delete_task(id: String) -> Result<AffectedRows, Error> {
 }
 
 pub async fn get_votes(id: String) -> Result<Votes, Error> {
-    let send = Request::get(&format!("{BASE_URL}/votes/{id}")).send().await;
-    log::info!("send {:?}", send);
-    let json = send.unwrap().json().await;
-    log::info!("json {:?}", json);
-    json
+    Request::get(&format!("{BASE_URL}/votes/{id}"))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
 }
 
 pub async fn add_vote(id: String, vote_id: usize) -> Result<Votes, Error> {
