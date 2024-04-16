@@ -4,13 +4,14 @@ extern crate rocket;
 use chess_api::Board;
 use cors::CORS;
 use db::{AffectedRows, Task, DB};
+use prelude::{ThingVotes, Votes};
 use rocket::{serde::json::Json, State};
+use serde::Serialize;
 
 use std::{
     io::{self, ErrorKind},
     sync::Arc,
 };
-use surrealdb::opt::auth::Root;
 
 pub mod error;
 pub mod prelude;
@@ -20,6 +21,12 @@ pub mod utils {
 }
 pub mod cors;
 pub mod db;
+
+#[derive(Debug, Serialize)]
+struct AuthParams<'a> {
+    email: &'a str,
+    password: &'a str,
+}
 
 #[post("/task/<title>")]
 async fn add_task(title: String, db: &State<DB>) -> Result<Json<Task>, io::Error> {
@@ -84,18 +91,32 @@ async fn update_chess_game(json: String, db: &State<DB>) -> Result<Json<Board>, 
     Ok(Json(board.board))
 }
 
+#[get("/votes/<id>")]
+async fn get_votes(id: String, db: &State<DB>) -> Result<Json<Votes>, io::Error> {
+    let votes = db.get_votes(id).await.map_err(io::Error::other)?;
+    Ok(Json(votes.into()))
+}
+
+#[patch("/votes/add/<id>/<vote_id>")]
+async fn add_vote(id: String, vote_id: usize, db: &State<DB>) -> Result<Json<Votes>, io::Error> {
+    let votes = db.add_vote(id, vote_id).await.map_err(io::Error::other)?;
+    Ok(Json(votes.into()))
+}
+
+#[patch("/votes/remove/<id>/<vote_id>")]
+async fn remove_vote(id: String, vote_id: usize, db: &State<DB>) -> Result<Json<Votes>, io::Error> {
+    let votes = db
+        .remove_vote(id, vote_id)
+        .await
+        .map_err(io::Error::other)?;
+    Ok(Json(votes.into()))
+}
+
 async fn connect(db: &DB) -> Result<(), prelude::Error> {
     db.db.use_ns("root").await?;
     db.db.use_db("database").await?;
-
-    db.db
-        .signin(Root {
-            username: "root",
-            password: "root",
-        })
-        .await
-        .map(|_| ())
-        .map_err(|e| e.into())
+    db.root_signin().await?;
+    Ok(())
 }
 
 #[launch]
@@ -122,7 +143,10 @@ async fn rocket() -> _ {
                 toggle_task,
                 delete_task,
                 get_chess_game,
-                update_chess_game
+                update_chess_game,
+                get_votes,
+                add_vote,
+                remove_vote
             ],
         )
         .attach(CORS)

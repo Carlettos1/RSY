@@ -10,20 +10,20 @@ mod pages {
     mod c2048;
     mod carlettos_chess;
     mod chess;
-    mod currently_programming;
     mod game_of_life;
     mod home;
     mod page_not_found;
     mod todo_app;
+    mod votacion;
 
     pub use c2048::*;
     pub use carlettos_chess::*;
     pub use chess::*;
-    pub use currently_programming::*;
     pub use game_of_life::*;
     pub use home::*;
     pub use page_not_found::*;
     pub use todo_app::*;
+    pub use votacion::*;
 }
 
 mod components {
@@ -56,8 +56,8 @@ pub enum Route {
     Home,
     #[at("/carlettos_chess")]
     CarlettosChess,
-    #[at("/currently_programming")]
-    CurrentlyProgramming,
+    #[at("/votacion")]
+    Votacion,
     #[at("/c2048")]
     C2048,
     #[not_found]
@@ -138,8 +138,8 @@ impl App {
                         <Link<Route> classes={classes!("navbar-item")} to={Route::CarlettosChess}>
                             { "Carlettos' Chess" }
                         </Link<Route>>
-                        <Link<Route> classes={classes!("navbar-item")} to={Route::CurrentlyProgramming}>
-                            { "Currently Programming" }
+                        <Link<Route> classes={classes!("navbar-item")} to={Route::Votacion}>
+                            { "Votacion" }
                         </Link<Route>>
                         <Link<Route> classes={classes!("navbar-item")} to={Route::C2048}>
                             { "2048!" }
@@ -188,8 +188,8 @@ fn switch(routes: Route) -> Html {
         Route::CarlettosChess => {
             html! { <CarlettosChess /> }
         }
-        Route::CurrentlyProgramming => {
-            html! { <CurrentlyProgramming /> }
+        Route::Votacion => {
+            html! { <Votacion /> }
         }
         Route::C2048 => {
             html! { <C2048 /> }

@@ -462,8 +462,10 @@ impl Component for C2048 {
                     Move::Right => self.right(),
                     Move::Up => self.up(),
                 }
-                self.spawn_tile(&mut thread_rng(), 0.1);
-                self.reset();
+                if self.has_moved {
+                    self.spawn_tile(&mut thread_rng(), 0.1);
+                    self.reset();
+                }
                 self.selected = None;
                 self.mode = Mode::None;
             }

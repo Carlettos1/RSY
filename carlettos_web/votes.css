@@ -1,0 +1,43 @@
+.votes {
+    text-align: center;
+}
+
+.vote-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 10px;
+    padding: 10px;
+}
+
+.vote-item {
+    height: 400px;
+    width: 400px;
+    padding: 20px;
+    text-align: center;
+}
+
+.vote-item.certain {
+    background-color: greenyellow;
+}
+
+.vote-item.checking {
+    background-color: lightsalmon;
+}
+
+@media screen and (min-width: 1200px) {
+    .vote-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media screen and (max-width: 1199px) and (min-aspect-ratio: 2/3) {
+    .vote-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .vote-list {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}

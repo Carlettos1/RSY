@@ -22,3 +22,42 @@ impl From<Board> for IdBoard {
         }
     }
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Vote {
+    pub id: usize,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ThingVotes {
+    pub id: Thing, // caso tal, poner Thing como id
+    pub votes: Vec<Vote>,
+}
+
+impl ThingVotes {
+    pub fn remove(&mut self, vote_id: usize) {
+        let index = self.votes.iter().position(|vote| vote.id == vote_id);
+        if let Some(index) = index {
+            self.votes.remove(index);
+        }
+    }
+
+    pub fn add(&mut self, vote_id: usize) {
+        self.votes.push(Vote { id: vote_id });
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Votes {
+    pub id: String,
+    pub votes: Vec<Vote>,
+}
+
+impl From<ThingVotes> for Votes {
+    fn from(value: ThingVotes) -> Self {
+        Votes {
+            id: value.id.id.to_raw(),
+            votes: value.votes,
+        }
+    }
+}

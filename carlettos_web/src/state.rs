@@ -2,7 +2,7 @@ use carlettos_chess::chess_controller::CChess;
 use chess_api::{Board, Color};
 use yew::Reducible;
 
-use crate::models::Task;
+use crate::models::{Check, Task, Vote, Votes};
 
 pub enum ChessAction {
     Get(Board),
@@ -129,5 +129,50 @@ impl Reducible for TaskState {
         };
 
         Self { tasks: next_tasks }.into()
+    }
+}
+
+pub enum VoteAction {
+    Set(Votes),
+    Add(Vote),
+    Remove(Vote),
+}
+
+#[derive(Default)]
+pub struct VotesState {
+    pub votes: Votes,
+    pub login: bool,
+    pub checks: Vec<Check>,
+}
+
+impl Reducible for VotesState {
+    type Action = VoteAction;
+
+    fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
+        let mut checks = self.checks.clone();
+        let next_votes = match action {
+            VoteAction::Set(votes) => votes,
+            VoteAction::Add(vote) => {
+                let mut votes = self.votes.clone();
+                if votes.votes.len() < 3 {
+                    votes.add(vote.id);
+                }
+                votes
+            }
+            VoteAction::Remove(vote) => {
+                let mut votes = self.votes.clone();
+                checks[vote.id] = Check::None;
+                votes.remove(vote.id);
+                votes
+            }
+        };
+
+        let checks = Check::update_from_votes(checks, &next_votes.votes);
+        VotesState {
+            votes: next_votes,
+            login: true,
+            checks,
+        }
+        .into()
     }
 }

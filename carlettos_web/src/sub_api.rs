@@ -1,7 +1,7 @@
 use chess_api::Board;
 use reqwasm::{http::Request, Error};
 
-use crate::models::{AffectedRows, Task};
+use crate::models::{AffectedRows, Task, Votes};
 
 const BASE_URL: &str = "http://localhost:8080";
 
@@ -55,6 +55,32 @@ pub async fn toggle_task(id: String) -> Result<AffectedRows, Error> {
 
 pub async fn delete_task(id: String) -> Result<AffectedRows, Error> {
     Request::delete(&format!("{BASE_URL}/task/{id}"))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+}
+
+pub async fn get_votes(id: String) -> Result<Votes, Error> {
+    let send = Request::get(&format!("{BASE_URL}/votes/{id}")).send().await;
+    log::info!("send {:?}", send);
+    let json = send.unwrap().json().await;
+    log::info!("json {:?}", json);
+    json
+}
+
+pub async fn add_vote(id: String, vote_id: usize) -> Result<Votes, Error> {
+    Request::patch(&format!("{BASE_URL}/votes/add/{id}/{vote_id}"))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+}
+
+pub async fn remove_vote(id: String, vote_id: usize) -> Result<Votes, Error> {
+    Request::patch(&format!("{BASE_URL}/votes/remove/{id}/{vote_id}"))
         .send()
         .await
         .unwrap()

@@ -8,3 +8,11 @@ select * from chess
 select chess:0 from chess;
 delete chess
 select * from chess
+use ns root
+use db database
+tables
+INFO FOR DB
+INFO FOR TABLE vote
+INFO FOR TABLE user
+INFO FOR TABLE vote
+SELECT * FROM vote

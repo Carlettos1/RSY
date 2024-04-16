@@ -1,10 +1,13 @@
 use carlettos_chess::Pos;
 use chess_api::{Board, Color};
+use gloo::console::log;
 use yew::UseReducerHandle;
 
 use crate::{
+    models::Vote,
     state::{
         CarlettosChessAction, CarlettosChessState, ChessAction, ChessState, TaskAction, TaskState,
+        VoteAction, VotesState,
     },
     sub_api,
 };
@@ -118,5 +121,53 @@ impl TaskController {
                 tasks.dispatch(TaskAction::Delete(id.clone()));
             }
         });
+    }
+}
+
+pub struct VotesController {
+    pub state: UseReducerHandle<VotesState>,
+}
+
+impl VotesController {
+    pub fn new(state: UseReducerHandle<VotesState>) -> VotesController {
+        VotesController { state }
+    }
+
+    pub fn init_votes(&self, id: String) {
+        let votes = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let fetched_votes = sub_api::get_votes(id.clone()).await;
+            let mut fetched_votes = fetched_votes.unwrap();
+            fetched_votes.id = id;
+            votes.dispatch(VoteAction::Set(fetched_votes))
+        });
+    }
+
+    pub fn remove_vote(&self, vote_id: usize) {
+        let votes = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let response = sub_api::remove_vote(votes.votes.id.clone(), vote_id)
+                .await
+                .unwrap();
+            votes.dispatch(VoteAction::Set(response));
+        });
+    }
+
+    pub fn add_vote(&self, vote_id: usize) {
+        let votes = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let response = sub_api::add_vote(votes.votes.id.clone(), vote_id)
+                .await
+                .unwrap();
+            votes.dispatch(VoteAction::Set(response));
+        });
+    }
+
+    pub fn click(&self, image_id: usize) -> VoteAction {
+        if self.state.votes.votes.contains(&Vote { id: image_id }) {
+            VoteAction::Remove(Vote { id: image_id })
+        } else {
+            VoteAction::Add(Vote { id: image_id })
+        }
     }
 }
