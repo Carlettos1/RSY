@@ -227,6 +227,7 @@ impl DB {
     }
 
     pub async fn get_votes(&self, id: String) -> Result<ThingVotes, prelude::Error> {
+        self.connect().await?;
         if let Some(votes) = self.db.select(("vote", id.clone())).await? {
             Ok(votes)
         } else {
