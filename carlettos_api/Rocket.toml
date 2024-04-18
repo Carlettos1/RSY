@@ -1,2 +1,7 @@
 [default]
 port = 8080
+address = "0.0.0.0"
+
+[default.tls]
+key = "/etc/letsencrypt/live/scirustic.cl/privkey.pem"
+certs = "/etc/letsencrypt/live/scirustic.cl/fullchain.pem"

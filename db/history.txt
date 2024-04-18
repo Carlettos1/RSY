@@ -16,3 +16,10 @@ INFO FOR TABLE vote
 INFO FOR TABLE user
 INFO FOR TABLE vote
 SELECT * FROM vote
+INFO FOR NS
+use ns root
+use db database
+INFO FOR TABLE vote
+INFO FOR TABLE votes
+SELECT * FROM vote
+exit

@@ -3,7 +3,7 @@ use reqwasm::{http::Request, Error};
 
 use crate::models::{AffectedRows, Task, Votes};
 
-const BASE_URL: &str = "http://localhost:8080";
+const BASE_URL: &str = "https://scirustic.cl:8080";
 
 pub async fn get_chess_game() -> Result<Board, Error> {
     Request::get(&format!("{BASE_URL}/chess"))

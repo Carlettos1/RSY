@@ -1,2 +1,5 @@
 [serve]
 release = true
+address = "0.0.0.0"
+tls_key_path = "/etc/letsencrypt/live/scirustic.cl/privkey.pem"
+tls_cert_path = "/etc/letsencrypt/live/scirustic.cl/fullchain.pem"
