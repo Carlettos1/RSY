@@ -72,8 +72,8 @@ pub fn currently_programming() -> Html {
             let input = input_node_ref.cast::<HtmlInputElement>();
 
             if let Some(input) = input {
-                if ruts.contains(&input.value()) {
-                    init.emit(input.value());
+                if ruts.contains(&input.value().replace(['.', '-'], "")) {
+                    init.emit(input.value().replace(['.', '-'], ""));
                     input.set_value("");
                 } else {
                     alert("RUT no válido");
@@ -123,8 +123,8 @@ pub fn currently_programming() -> Html {
                 let input = input_node_ref.cast::<HtmlInputElement>();
 
                 if let Some(input) = input {
-                    if ruts.contains(&input.value()) {
-                        init.emit(input.value());
+                    if ruts.contains(&input.value().replace(['.', '-'], "")) {
+                        init.emit(input.value().replace(['.', '-'], ""));
                         input.set_value("");
                     } else {
                         alert("RUT no válido");
