@@ -1,5 +1,3 @@
-use std::env;
-
 use chess_api::Board;
 use lazy_static::lazy_static;
 use reqwasm::{http::Request, Error};
@@ -7,7 +5,7 @@ use reqwasm::{http::Request, Error};
 use crate::models::{AffectedRows, Task, Votes};
 
 lazy_static! {
-    pub static ref API_IP: String = env::var("API_IP").expect("API_IP varenv not found");
+    pub static ref API_IP: String = std::env!("API_IP").to_string();
 }
 
 pub async fn get_chess_game() -> Result<Board, Error> {
