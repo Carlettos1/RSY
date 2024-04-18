@@ -4,7 +4,7 @@ extern crate rocket;
 use chess_api::Board;
 use cors::CORS;
 use db::{AffectedRows, Task, DB};
-use prelude::{ThingVotes, Votes};
+use prelude::Votes;
 use rocket::{serde::json::Json, State};
 use serde::Serialize;
 
@@ -122,9 +122,11 @@ async fn connect(db: &DB) -> Result<(), prelude::Error> {
 #[launch]
 async fn rocket() -> _ {
     let db = Arc::new(
-        surrealdb::engine::any::connect("ws://64.23.184.29:8000")
-            .await
-            .unwrap(),
+        surrealdb::engine::any::connect(
+            std::env::var("DB_IP").expect("DB_IP varenv need to be setted"),
+        )
+        .await
+        .unwrap(),
     );
 
     let db = DB { db };

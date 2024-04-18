@@ -1,5 +1,3 @@
-use std::default;
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer};
 
@@ -65,6 +63,7 @@ impl Votes {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Check {
     Certain,
@@ -83,8 +82,8 @@ impl Check {
         .to_string()
     }
 
-    pub fn update_from_votes(mut checks: Vec<Self>, votes: &[Vote]) -> Vec<Self> {
-        checks = vec![Check::None; 6];
+    pub fn update_from_votes(votes: &[Vote]) -> Vec<Self> {
+        let mut checks = vec![Check::None; 6];
         for vote in votes.iter() {
             checks[vote.id] = Check::Certain;
         }

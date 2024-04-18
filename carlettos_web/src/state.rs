@@ -167,7 +167,7 @@ impl Reducible for VotesState {
             }
         };
 
-        let checks = Check::update_from_votes(checks, &next_votes.votes);
+        let checks = Check::update_from_votes(&next_votes.votes);
         VotesState {
             votes: next_votes,
             login: true,

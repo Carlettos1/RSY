@@ -1,10 +1,9 @@
-use std::{default, ops::AddAssign};
+use std::ops::AddAssign;
 
 use csta::prelude::*;
 use csta_derive::Randomizable;
 use rand::prelude::*;
-use web_sys::{js_sys::Object, wasm_bindgen::JsValue, Touch, TouchList};
-use yew::{html::IntoPropValue, prelude::*};
+use yew::prelude::*;
 
 const L: usize = 4;
 
@@ -171,20 +170,20 @@ impl C2048 {
         }
     }
 
-    pub fn set_tile(&mut self, pos: usize, exp: u8) {
+    pub fn _set_tile(&mut self, pos: usize, exp: u8) {
         //unsafe { self.grid.get_unchecked_mut(pos).exp = exp };
         self.grid[pos].exp = exp;
     }
 
-    pub fn highest(&self) -> &Tile {
+    pub fn _highest(&self) -> &Tile {
         self.grid.iter().max().unwrap()
     }
 
-    pub fn score(&self) -> usize {
+    pub fn _score(&self) -> usize {
         self.grid.iter().map(|t| 1 << t.exp).sum()
     }
 
-    pub fn is_lose(&self) -> bool {
+    pub fn _is_lose(&self) -> bool {
         if self.grid.iter().any(|tile| tile.exp == 0) {
             return false;
         }
@@ -443,11 +442,11 @@ impl Component for C2048 {
     type Message = C2048Msg;
     type Properties = ();
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self::sample_uniform(&mut thread_rng())
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         if msg == C2048Msg::TouchEnd {
             self.touched = false;
         }

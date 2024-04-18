@@ -1,0 +1,12 @@
+TRUNK_BUILD_RELEASE=true
+TRUNK_SERVE_PORT=443
+TRUNK_SERVE_ADDRESS="0.0.0.0"
+TRUNK_SERVE_TLS_KEY_PATH = "/etc/letsencrypt/live/scirustic.cl/privkey.pem"
+TRUNK_SERVE_TLS_CERT_PATH = "/etc/letsencrypt/live/scirustic.cl/fullchain.pem"
+
+ROCKET_ADDRESS="0.0.0.0"
+ROCKET_PORT=8080
+ROCKET_KEY="/etc/letsencrypt/live/scirustic.cl/privkey.pem"
+ROCKET_CERTS="/etc/letsencrypt/live/scirustic.cl/fullchain.pem"
+
+API_IP = "https://scirustic.cl:8080"
