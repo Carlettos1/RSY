@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use gloo_dialogs::alert;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
@@ -15,6 +16,45 @@ pub fn currently_programming() -> Html {
         .into_iter()
         .map(|id| Vote { id })
         .collect();
+    let ruts: Rc<Vec<_>> = Rc::new(
+        vec![
+            "20224307K",
+            "207743240",
+            "211343109",
+            "212618454",
+            "212811998",
+            "212276405",
+            "204664358",
+            "204423334",
+            "20306411K",
+            "212932590",
+            "210945350",
+            "214734532",
+            "189573804",
+            "210815686",
+            "199776649",
+            "206412739",
+            "213205803",
+            "210965246",
+            "208060414",
+            "205438475",
+            "21512049K",
+            "206659750",
+            "212473782",
+            "210811036",
+            "209987228",
+            "212489069",
+            "211012552",
+            "211178388",
+            "141945270",
+            "205916121",
+            "141509039",
+            "134971649",
+        ]
+        .into_iter()
+        .map(|s| s.to_string())
+        .collect(),
+    );
 
     let state = use_reducer(VotesState::default);
     let controller = Rc::new(VotesController::new(state.clone()));
@@ -23,6 +63,7 @@ pub fn currently_programming() -> Html {
     let on_login = {
         let input_node_ref = input_node_ref.clone();
         let controller = controller.clone();
+        let ruts = ruts.clone();
         let init = Callback::from(move |id: String| {
             controller.init_votes(id);
         });
@@ -31,8 +72,12 @@ pub fn currently_programming() -> Html {
             let input = input_node_ref.cast::<HtmlInputElement>();
 
             if let Some(input) = input {
-                init.emit(input.value());
-                input.set_value("");
+                if ruts.contains(&input.value().replace(['.', '-'], "")) {
+                    init.emit(input.value().replace(['.', '-'], ""));
+                    input.set_value("");
+                } else {
+                    alert("RUT no válido");
+                }
             }
         })
     };
@@ -68,6 +113,7 @@ pub fn currently_programming() -> Html {
     let on_enter = {
         let input_node_ref = input_node_ref.clone();
         let controller = controller.clone();
+        let ruts = ruts.clone();
         let init = Callback::from(move |id: String| {
             controller.init_votes(id);
         });
@@ -77,8 +123,41 @@ pub fn currently_programming() -> Html {
                 let input = input_node_ref.cast::<HtmlInputElement>();
 
                 if let Some(input) = input {
-                    init.emit(input.value());
-                    input.set_value("");
+                    if ruts.contains(&input.value().replace(['.', '-'], "")) {
+                        init.emit(input.value().replace(['.', '-'], ""));
+                        input.set_value("");
+                    } else {
+                        alert("RUT no válido");
+                    }
+                }
+            }
+        })
+    };
+
+    let on_release = {
+        let input_node_ref = input_node_ref.clone();
+        let controller = controller.clone();
+
+        Callback::from(move |kbe: KeyboardEvent| {
+            if vec!["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "k", "K"]
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+                .contains(&kbe.key())
+            {
+                let input = input_node_ref.cast::<HtmlInputElement>();
+                if let Some(input) = input {
+                    let mut rut = input.value().replace(['.', '-'], "");
+                    if rut.len() >= 2 {
+                        String::insert(&mut rut, 2, '.');
+                    }
+                    if rut.len() >= 6 {
+                        String::insert(&mut rut, 6, '.');
+                    }
+                    if rut.len() >= 10 {
+                        String::insert(&mut rut, 10, '-');
+                    }
+                    input.set_value(&rut);
                 }
             }
         })
@@ -86,9 +165,9 @@ pub fn currently_programming() -> Html {
 
     html! {
         <div class="votes">
-            <label> { "Ingresar RUT sin puntos ni guíon" } </label>
+            <label> { "Ingresar RUT" } </label>
             <div class="center">
-                <input onkeydown={on_enter} ref={input_node_ref} id="login_text" type="text"/>
+                <input onkeydown={on_enter} onkeyup={on_release} ref={input_node_ref} id="login_text" type="text"/>
                 <button onclick={on_login}> {"Ingresar"} </button>
             </div>
             <div>

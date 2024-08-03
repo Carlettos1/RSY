@@ -486,6 +486,7 @@ dependencies = [
  "csta",
  "csta_derive",
  "gloo 0.11.0",
+ "gloo-dialogs 0.2.0",
  "lazy_static",
  "log",
  "rand",
