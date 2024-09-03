@@ -4,7 +4,7 @@ procs:
     cmd: ["surreal", "start", "file:storage/main.db", "-u", "root", "-p", "root", "--auth"]
   api:
     cwd: "./carlettos_api/"
-    cmd: ["bash", "./run_test.sh"]
+    cmd: ["nu", "run_test.nu"]
   web:
     cwd: "./carlettos_web"
-    cmd: ["bash", "./run_test.sh"]
+    cmd: ["nu", "run_test.nu"]

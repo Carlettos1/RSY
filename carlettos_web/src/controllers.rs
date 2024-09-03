@@ -1,6 +1,5 @@
 use carlettos_chess::Pos;
 use chess_api::{Board, Color};
-use gloo::console::log;
 use yew::UseReducerHandle;
 
 use crate::{

@@ -92,10 +92,10 @@ impl Component for App {
         }
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <BrowserRouter>
-                { self.view_nav(ctx.link()) }
+                //{ self.view_nav(ctx.link()) }
 
                 <main>
                     <Switch<Route> render={switch}/>
@@ -111,7 +111,7 @@ impl Component for App {
 }
 
 impl App {
-    fn view_nav(&self, link: &Scope<Self>) -> Html {
+    fn _view_nav(&self, link: &Scope<Self>) -> Html {
         let Self { navbar_active } = *self;
 
         let active_class = if !navbar_active { "is-active" } else { "" };

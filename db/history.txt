@@ -23,3 +23,5 @@ INFO FOR TABLE vote
 INFO FOR TABLE votes
 SELECT * FROM vote
 exit
+bye
+quit

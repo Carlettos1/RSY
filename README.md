@@ -46,3 +46,10 @@ On carlettos_web/ run:
 ```sh
 trunk serve --open --port 8081 --release
 ```
+
+## To Update / Create the surrealdb
+run, on test, on `db/`:
+```sh
+surreal import --namespace root --database database -p root -u root --endpoint http://localhost:8000 init.surreal
+```
+on production, use the production endpoint.

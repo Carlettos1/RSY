@@ -136,7 +136,6 @@ pub fn currently_programming() -> Html {
 
     let on_release = {
         let input_node_ref = input_node_ref.clone();
-        let controller = controller.clone();
 
         Callback::from(move |kbe: KeyboardEvent| {
             if vec!["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "k", "K"]
