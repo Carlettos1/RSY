@@ -13,6 +13,7 @@ use surrealdb::Surreal;
 
 use crate::prelude;
 use crate::prelude::IdBoard;
+use crate::prelude::LeaderboardEntry;
 use crate::prelude::ThingVotes;
 use crate::prelude::Vote;
 use crate::utils::macros::map;
@@ -281,5 +282,35 @@ impl DB {
         } else {
             Err(prelude::Error::ValueNotFound(id))
         }
+    }
+
+    pub async fn get_highscores(&self) -> Result<Vec<LeaderboardEntry>, prelude::Error> {
+        self.connect().await?;
+        let highscores = self.db.select("c2048").await?;
+        Ok(highscores)
+    }
+
+    pub async fn add_highscore(
+        &self,
+        name: String,
+        score: usize,
+        max_tile: usize,
+        min_energy: isize,
+        max_energy: isize,
+    ) -> Result<LeaderboardEntry, prelude::Error> {
+        self.connect().await?;
+        let mut hs = self
+            .db
+            .create("c2048")
+            .content(LeaderboardEntry {
+                name,
+                score,
+                max_tile,
+                min_energy,
+                max_energy,
+            })
+            .await?;
+        assert!(hs.len() == 1);
+        Ok(hs.remove(0))
     }
 }

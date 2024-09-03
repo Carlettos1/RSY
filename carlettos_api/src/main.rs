@@ -4,7 +4,7 @@ extern crate rocket;
 use chess_api::Board;
 use cors::CORS;
 use db::{AffectedRows, Task, DB};
-use prelude::Votes;
+use prelude::{LeaderboardEntry, Votes};
 use rocket::{serde::json::Json, State};
 use serde::Serialize;
 
@@ -112,6 +112,28 @@ async fn remove_vote(id: String, vote_id: usize, db: &State<DB>) -> Result<Json<
     Ok(Json(votes.into()))
 }
 
+#[post("/c2048/highscores/<name>/<score>/<max_tile>/<min_energy>/<max_energy>")]
+async fn add_highscore(
+    name: String,
+    score: usize,
+    max_tile: usize,
+    min_energy: isize,
+    max_energy: isize,
+    db: &State<DB>,
+) -> Result<Json<LeaderboardEntry>, io::Error> {
+    let highscore = db
+        .add_highscore(name, score, max_tile, min_energy, max_energy)
+        .await
+        .map_err(io::Error::other)?;
+    Ok(Json(highscore))
+}
+
+#[get("/c2048/highscores")]
+async fn get_highscores(db: &State<DB>) -> Result<Json<Vec<LeaderboardEntry>>, io::Error> {
+    let highscores = db.get_highscores().await.map_err(io::Error::other)?;
+    Ok(Json(highscores))
+}
+
 async fn connect(db: &DB) -> Result<(), prelude::Error> {
     db.db.use_ns("root").await?;
     db.db.use_db("database").await?;
@@ -148,7 +170,9 @@ async fn rocket() -> _ {
                 update_chess_game,
                 get_votes,
                 add_vote,
-                remove_vote
+                remove_vote,
+                get_highscores,
+                add_highscore,
             ],
         )
         .attach(CORS)

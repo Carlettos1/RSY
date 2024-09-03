@@ -1,11 +1,14 @@
 use std::ops::AddAssign;
 
+use c2048_leader_board::C2048Leaderboard;
 use csta::prelude::*;
 use csta_derive::Randomizable;
 use rand::prelude::*;
 use yew::prelude::*;
 
 const L: usize = 4;
+
+pub mod c2048_leader_board;
 
 #[derive(Debug, Default, PartialEq)]
 pub struct Energy {
@@ -141,6 +144,9 @@ pub struct C2048 {
     pub mode: Mode,
     pub touched: bool,
     pub touch: Option<(i32, i32)>,
+    pub automoved: bool,
+    pub show_leaderboard: bool,
+    pub energies: Vec<isize>,
 }
 
 impl Randomizable for C2048 {
@@ -154,10 +160,12 @@ impl C2048 {
         let mut c2048 = Self::default();
         c2048.spawn_tile(rng, 0.0);
         c2048.spawn_tile(rng, 0.0);
+        c2048.energies.push(c2048.energy().sum());
         c2048
     }
 
     pub fn spawn_tile<R: Rng + ?Sized>(&mut self, rng: &mut R, chance: f64) {
+        self.energies.push(self.energy().sum());
         let random_exp = if rng.gen_bool(chance) { 2 } else { 1 };
 
         let random_tile = self
@@ -167,6 +175,7 @@ impl C2048 {
             .choose(rng);
         if let Some(tile) = random_tile {
             tile.exp = random_exp;
+            self.energies.push(self.energy().sum());
         }
     }
 
@@ -175,15 +184,15 @@ impl C2048 {
         self.grid[pos].exp = exp;
     }
 
-    pub fn _highest(&self) -> &Tile {
+    pub fn highest(&self) -> &Tile {
         self.grid.iter().max().unwrap()
     }
 
-    pub fn _score(&self) -> usize {
+    pub fn score(&self) -> usize {
         self.grid.iter().map(|t| 1 << t.exp).sum()
     }
 
-    pub fn _is_lose(&self) -> bool {
+    pub fn is_lose(&self) -> bool {
         if self.grid.iter().any(|tile| tile.exp == 0) {
             return false;
         }
@@ -464,6 +473,9 @@ impl Component for C2048 {
                 if self.has_moved {
                     self.spawn_tile(&mut thread_rng(), 0.1);
                     self.reset();
+                    if self.is_lose() && !self.automoved {
+                        self.show_leaderboard = true;
+                    }
                 }
                 self.selected = None;
                 self.mode = Mode::None;
@@ -479,8 +491,13 @@ impl Component for C2048 {
                             false if dy > 0 => self.up(),
                             false => self.down(),
                         }
-                        self.spawn_tile(&mut thread_rng(), 0.1);
-                        self.reset();
+                        if self.has_moved {
+                            self.spawn_tile(&mut thread_rng(), 0.1);
+                            self.reset();
+                            if self.is_lose() && !self.automoved {
+                                self.show_leaderboard = true;
+                            }
+                        }
                         self.selected = None;
                         self.mode = Mode::None;
                         self.touched = true;
@@ -526,6 +543,7 @@ impl Component for C2048 {
                 let moves = vec![down, up, left, right];
                 let min = moves.into_iter().filter(|g| g.has_moved).min();
                 if let Some(min) = min {
+                    self.automoved = true;
                     *self = min;
                     self.spawn_tile(&mut thread_rng(), 0.1);
                     self.reset();
@@ -535,6 +553,7 @@ impl Component for C2048 {
             }
             C2048Msg::Reset => {
                 *self = Self::new(&mut thread_rng());
+                self.automoved = false;
             }
             C2048Msg::TouchEnd => {
                 self.touched = false;
@@ -611,8 +630,11 @@ impl Component for C2048 {
             }
         });
 
-        let cb = ctx.link().callback(|kbe: KeyboardEvent| {
-            if kbe.key() == *"d" || kbe.key() == *"d" || kbe.key() == *"ArrowRight" {
+        let lose = self.is_lose();
+        let cb = ctx.link().callback(move |kbe: KeyboardEvent| {
+            if lose {
+                C2048Msg::Nothing
+            } else if kbe.key() == *"d" || kbe.key() == *"d" || kbe.key() == *"ArrowRight" {
                 C2048Msg::Move(Move::Right)
             } else if kbe.key() == *"S" || kbe.key() == *"s" || kbe.key() == *"ArrowDown" {
                 C2048Msg::Move(Move::Up)
@@ -674,6 +696,7 @@ impl Component for C2048 {
                         </div>
                     </div>
                 </section>
+                <C2048Leaderboard show_leaderboard={self.show_leaderboard} score={self.score()} max_tile={1 << self.highest().exp} max_energy={self.energies.iter().max().unwrap()} min_energy={self.energies.iter().min().unwrap()}/>
             </div>
         }
     }

@@ -192,3 +192,7 @@
     background: #3c3a32;
     font-size: 30px;
 }
+
+.c2048_highscore_input {
+    width: 70%;
+}

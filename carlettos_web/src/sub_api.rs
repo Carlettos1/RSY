@@ -2,7 +2,10 @@ use chess_api::Board;
 use lazy_static::lazy_static;
 use reqwasm::{http::Request, Error};
 
-use crate::models::{AffectedRows, Task, Votes};
+use crate::{
+    c2048_leader_board::Entry,
+    models::{AffectedRows, Task, Votes},
+};
 
 lazy_static! {
     pub static ref API_IP: String = std::env!("API_IP").to_string();
@@ -91,4 +94,25 @@ pub async fn remove_vote(id: String, vote_id: usize) -> Result<Votes, Error> {
         .unwrap()
         .json()
         .await
+}
+
+pub async fn get_highscores() -> Result<Vec<Entry>, Error> {
+    Request::get(&format!("{}/c2048/highscores", *API_IP))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+}
+
+pub async fn add_highscore(entry: &Entry) -> Result<Entry, Error> {
+    Request::post(&format!(
+        "{}/c2048/highscores/{}/{}/{}/{}/{}",
+        *API_IP, entry.name, entry.score, entry.max_tile, entry.min_energy, entry.max_energy
+    ))
+    .send()
+    .await
+    .unwrap()
+    .json()
+    .await
 }

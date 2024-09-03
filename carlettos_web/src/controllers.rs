@@ -1,12 +1,14 @@
 use carlettos_chess::Pos;
 use chess_api::{Board, Color};
+use gloo::console::log;
 use yew::UseReducerHandle;
 
 use crate::{
+    c2048_leader_board::Entry,
     models::Vote,
     state::{
-        CarlettosChessAction, CarlettosChessState, ChessAction, ChessState, TaskAction, TaskState,
-        VoteAction, VotesState,
+        C2048LeaderboardAction, C2048LeaderboardState, CarlettosChessAction, CarlettosChessState,
+        ChessAction, ChessState, TaskAction, TaskState, VoteAction, VotesState,
     },
     sub_api,
 };
@@ -168,5 +170,33 @@ impl VotesController {
         } else {
             VoteAction::Add(Vote { id: image_id })
         }
+    }
+}
+
+pub struct C2048LeaderboardController {
+    pub state: UseReducerHandle<C2048LeaderboardState>,
+}
+
+impl C2048LeaderboardController {
+    pub fn new(state: UseReducerHandle<C2048LeaderboardState>) -> C2048LeaderboardController {
+        C2048LeaderboardController { state }
+    }
+
+    pub fn get_highscores(&self) {
+        let state = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let highscores = sub_api::get_highscores().await.unwrap();
+            state.dispatch(C2048LeaderboardAction::Load(highscores));
+        })
+    }
+
+    pub fn add_highscore(&self, entry: Entry) {
+        let state = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let entry = sub_api::add_highscore(&entry).await;
+            println!("{entry:?}");
+            let entry = entry.unwrap();
+            state.dispatch(C2048LeaderboardAction::Add(entry));
+        })
     }
 }

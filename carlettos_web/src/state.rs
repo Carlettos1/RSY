@@ -2,7 +2,10 @@ use carlettos_chess::chess_controller::CChess;
 use chess_api::{Board, Color};
 use yew::Reducible;
 
-use crate::models::{Check, Task, Vote, Votes};
+use crate::{
+    c2048_leader_board::Entry,
+    models::{Check, Task, Vote, Votes},
+};
 
 pub enum ChessAction {
     Get(Board),
@@ -174,5 +177,30 @@ impl Reducible for VotesState {
             checks,
         }
         .into()
+    }
+}
+
+#[derive(Default)]
+pub struct C2048LeaderboardState {
+    pub entries: Vec<Entry>,
+}
+
+pub enum C2048LeaderboardAction {
+    Add(Entry),
+    Load(Vec<Entry>),
+}
+
+impl Reducible for C2048LeaderboardState {
+    type Action = C2048LeaderboardAction;
+
+    fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
+        match action {
+            C2048LeaderboardAction::Load(entries) => C2048LeaderboardState { entries }.into(),
+            C2048LeaderboardAction::Add(entry) => {
+                let mut entries = self.entries.clone();
+                entries.push(entry);
+                C2048LeaderboardState { entries }.into()
+            }
+        }
     }
 }

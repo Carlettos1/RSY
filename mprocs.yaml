@@ -1,17 +1,10 @@
 procs:
   surreal:
     cwd: "./db/"
-    cmd: ["surreal", "start", "file:storage/main.db", "-u", "root", "-p", "root"]
+    cmd: ["surreal", "start", "file:storage/main.db", "-u", "root", "-p", "root", "--auth"]
   api:
     cwd: "./carlettos_api/"
-    cmd: ["cargo", "run", "-r"]
+    cmd: ["bash", "./run_test.sh"]
   web:
     cwd: "./carlettos_web"
-    cmd: ["trunk", "serve", "--port", "8081", "--release"]
-  bore_api:
-    cmd: ["bore", "local", "8080", "--to", "bore.pub"]
-  bore_web:
-    cmd: ["bore", "local", "8081", "--to", "bore.pub"]
-  surreal_sql:
-    cwd: "./db/"
-    cmd: ["surreal", "sql", "-u", "root", "-p", "root"]
+    cmd: ["bash", "./run_test.sh"]

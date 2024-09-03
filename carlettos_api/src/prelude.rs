@@ -61,3 +61,12 @@ impl From<ThingVotes> for Votes {
         }
     }
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LeaderboardEntry {
+    pub name: String,
+    pub score: usize,
+    pub max_tile: usize,
+    pub min_energy: isize,
+    pub max_energy: isize,
+}
