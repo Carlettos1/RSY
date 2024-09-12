@@ -196,3 +196,9 @@
 .c2048_highscore_input {
     width: 70%;
 }
+
+.c2048-score {
+    font-size: 25px;
+    height: 25px;
+    text-align: center;
+}

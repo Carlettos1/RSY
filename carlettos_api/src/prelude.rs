@@ -67,6 +67,6 @@ pub struct LeaderboardEntry {
     pub name: String,
     pub score: usize,
     pub max_tile: usize,
-    pub min_energy: isize,
+    pub avg_energy: isize,
     pub max_energy: isize,
 }

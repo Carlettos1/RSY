@@ -92,10 +92,10 @@ impl Component for App {
         }
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <BrowserRouter>
-                //{ self.view_nav(ctx.link()) }
+                { self.view_nav(ctx.link()) }
 
                 <main>
                     <Switch<Route> render={switch}/>
@@ -111,7 +111,43 @@ impl Component for App {
 }
 
 impl App {
-    fn _view_nav(&self, link: &Scope<Self>) -> Html {
+    fn view_nav(&self, link: &Scope<Self>) -> Html {
+        let Self { navbar_active } = *self;
+
+        let active_class = if navbar_active { "is-active" } else { "" };
+        html! {
+            <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+                <div class="navbar-brand">
+                    <h1 class="navbar-item is-size-3">{ "Happy" }</h1>
+
+                    <button class={classes!("navbar-burger", "burger", active_class)}
+                        aria-label="menu" aria-expanded="false"
+                        onclick={link.callback(|_| Msg::ToggleNavbar)}
+                    >
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class={classes!("navbar-menu", active_class)}>
+                    <div class="navbar-start">
+                        <Link<Route> classes={classes!("navbar-item")} to={Route::Home}>
+                            { "Home" }
+                        </Link<Route>>
+                        <Link<Route> classes={classes!("navbar-item")} to={Route::C2048}>
+                            { "2048!" }
+                        </Link<Route>>
+                        <Link<Route> classes={classes!("navbar-item")} to={Route::GameOfLife}>
+                            { "Game Of Life" }
+                        </Link<Route>>
+                    </div>
+                </div>
+            </nav>
+        }
+    }
+
+    #[allow(dead_code)]
+    fn view_nav_pro(&self, link: &Scope<Self>) -> Html {
         let Self { navbar_active } = *self;
 
         let active_class = if !navbar_active { "is-active" } else { "" };

@@ -3,7 +3,7 @@ use chess_api::{Board, Color};
 use yew::UseReducerHandle;
 
 use crate::{
-    c2048_leader_board::Entry,
+    c2048_leaderboard::Entry,
     models::Vote,
     state::{
         C2048LeaderboardAction, C2048LeaderboardState, CarlettosChessAction, CarlettosChessState,

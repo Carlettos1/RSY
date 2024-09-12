@@ -13,7 +13,7 @@ pub struct Entry {
     pub name: String,
     pub score: usize,
     pub max_tile: usize,
-    pub min_energy: isize,
+    pub avg_energy: isize,
     pub max_energy: isize,
 }
 
@@ -22,14 +22,14 @@ impl Entry {
         name: String,
         score: usize,
         max_tile: usize,
-        min_energy: isize,
+        avg_energy: isize,
         max_energy: isize,
     ) -> Self {
         Entry {
             name,
             score,
             max_tile,
-            min_energy,
+            avg_energy,
             max_energy,
         }
     }
@@ -40,7 +40,7 @@ impl Entry {
                 <td>{&self.name}</td>
                 <td>{self.score}</td>
                 <td>{self.max_tile}</td>
-                <td>{self.min_energy}</td>
+                <td>{self.avg_energy}</td>
                 <td>{self.max_energy}</td>
             </tr>
         }
@@ -52,7 +52,7 @@ pub struct C2048Prop {
     pub show_leaderboard: bool,
     pub score: usize,
     pub max_tile: usize,
-    pub min_energy: isize,
+    pub avg_energy: isize,
     pub max_energy: isize,
 }
 
@@ -62,7 +62,7 @@ pub fn c2048_leaderboard(
         show_leaderboard,
         score,
         max_tile,
-        min_energy,
+        avg_energy,
         max_energy,
     }: &C2048Prop,
 ) -> Html {
@@ -91,7 +91,7 @@ pub fn c2048_leaderboard(
                 .get_element_by_id("c2048_highscore_input")
                 .map(|e| e.dyn_into::<HtmlInputElement>())
         );
-        let entry = Entry::new(String::new(), *score, *max_tile, *min_energy, *max_energy);
+        let entry = Entry::new(String::new(), *score, *max_tile, *avg_energy, *max_energy);
         let add_hs = add_hs.clone();
         Callback::from(move |_| {
             let input = document()
@@ -110,7 +110,7 @@ pub fn c2048_leaderboard(
     };
 
     let on_enter = {
-        let entry = Entry::new(String::new(), *score, *max_tile, *min_energy, *max_energy);
+        let entry = Entry::new(String::new(), *score, *max_tile, *avg_energy, *max_energy);
 
         Callback::from(move |kbe: KeyboardEvent| {
             let input = document()
@@ -141,7 +141,7 @@ pub fn c2048_leaderboard(
                         <th> { "Nombre" } </th>
                         <th> { "Score" } </th>
                         <th> { "Max Tile" } </th>
-                        <th> { "Min Energy" } </th>
+                        <th> { "Avg Energy" } </th>
                         <th> { "Max Energy" } </th>
                     </tr>
                 </thead>
@@ -154,7 +154,7 @@ pub fn c2048_leaderboard(
                                     <button class="button" type="submit" style="height: 24px;" onclick={onclick}> { "Enter" } </button> </th>
                                     <th> { score } </th>
                                     <th> { max_tile } </th>
-                                    <th> { min_energy } </th>
+                                    <th> { avg_energy } </th>
                                     <th> { max_energy } </th>
                                 </tr>
                             </thead>
@@ -168,7 +168,7 @@ pub fn c2048_leaderboard(
                         <th> { "Nombre" } </th>
                         <th> { "Score" } </th>
                         <th> { "Max Tile" } </th>
-                        <th> { "Min Energy" } </th>
+                        <th> { "Avg Energy" } </th>
                         <th> { "Max Energy" } </th>
                     </tr>
                 </tfoot>

@@ -295,7 +295,7 @@ impl DB {
         name: String,
         score: usize,
         max_tile: usize,
-        min_energy: isize,
+        avg_energy: isize,
         max_energy: isize,
     ) -> Result<LeaderboardEntry, prelude::Error> {
         self.connect().await?;
@@ -306,7 +306,7 @@ impl DB {
                 name,
                 score,
                 max_tile,
-                min_energy,
+                avg_energy,
                 max_energy,
             })
             .await?;

@@ -4,30 +4,22 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-wasm-bindgen-futures = "0.4"
-yew = { version = "0.21", features = ["csr"] }
-yew-router = "0.18"
-reqwasm = "0.5"
-serde = { version ="*", features = ["derive"] }
-chrono = { version = "*", features = ["serde", "wasmbind"] }
-chess_api = { path = "../chess_api" }
-serde_json = "1.0"
-rand = "0.8"
-gloo = "0.11"
-log = "0.4"
-wasm-logger = "0.2"
-csta = "1"
-csta_derive = "1"
-lazy_static = "1.4.0"
-gloo-dialogs = "0.2.0"
+wasm-bindgen-futures = "=0.4.43"
+yew = { version = "=0.21.0", features = ["csr"] }
+yew-router = "=0.18.0"
+reqwasm = "=0.5.0"
+serde = { version ="=1.0.210", features = ["derive"] }
+chrono = { version = "=0.4.38", features = ["serde", "wasmbind"] }
+web-sys = { version = "=0.3.70", features = ["console", "css", "TouchList", "Touch"]}
+chess_api = { path = "../chess_api"}
+serde_json = "=1.0.128"
+rand = "=0.8.5"
+gloo = "=0.11.0"
+log = "=0.4.22"
+wasm-logger = "=0.2.0"
+csta = "=1.0.1"
+csta_derive = "=1.0.0"
+lazy_static = "=1.4.0"
+gloo-dialogs = "=0.2.0"
 
 carlettos_chess = { path = "../carlettos_chess" }
-
-[dependencies.web-sys]
-version = "0.3"
-features = [
-    "console",
-    "css",
-    "TouchList",
-    "Touch",
-]

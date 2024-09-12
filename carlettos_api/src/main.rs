@@ -6,7 +6,6 @@ use cors::CORS;
 use db::{AffectedRows, Task, DB};
 use prelude::{LeaderboardEntry, Votes};
 use rocket::{serde::json::Json, State};
-use serde::Serialize;
 
 use std::{
     io::{self, ErrorKind},
@@ -21,12 +20,6 @@ pub mod utils {
 }
 pub mod cors;
 pub mod db;
-
-#[derive(Debug, Serialize)]
-struct AuthParams<'a> {
-    email: &'a str,
-    password: &'a str,
-}
 
 #[post("/task/<title>")]
 async fn add_task(title: String, db: &State<DB>) -> Result<Json<Task>, io::Error> {
@@ -112,17 +105,17 @@ async fn remove_vote(id: String, vote_id: usize, db: &State<DB>) -> Result<Json<
     Ok(Json(votes.into()))
 }
 
-#[post("/c2048/highscores/<name>/<score>/<max_tile>/<min_energy>/<max_energy>")]
+#[post("/c2048/highscores/<name>/<score>/<max_tile>/<avg_energy>/<max_energy>")]
 async fn add_highscore(
     name: String,
     score: usize,
     max_tile: usize,
-    min_energy: isize,
+    avg_energy: isize,
     max_energy: isize,
     db: &State<DB>,
 ) -> Result<Json<LeaderboardEntry>, io::Error> {
     let highscore = db
-        .add_highscore(name, score, max_tile, min_energy, max_energy)
+        .add_highscore(name, score, max_tile, avg_energy, max_energy)
         .await
         .map_err(io::Error::other)?;
     Ok(Json(highscore))

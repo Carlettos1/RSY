@@ -3,7 +3,7 @@ use chess_api::{Board, Color};
 use yew::Reducible;
 
 use crate::{
-    c2048_leader_board::Entry,
+    c2048_leaderboard::Entry,
     models::{Check, Task, Vote, Votes},
 };
 

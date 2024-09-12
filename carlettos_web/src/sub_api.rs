@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use reqwasm::{http::Request, Error};
 
 use crate::{
-    c2048_leader_board::Entry,
+    c2048_leaderboard::Entry,
     models::{AffectedRows, Task, Votes},
 };
 
@@ -108,7 +108,7 @@ pub async fn get_highscores() -> Result<Vec<Entry>, Error> {
 pub async fn add_highscore(entry: &Entry) -> Result<Entry, Error> {
     Request::post(&format!(
         "{}/c2048/highscores/{}/{}/{}/{}/{}",
-        *API_IP, entry.name, entry.score, entry.max_tile, entry.min_energy, entry.max_energy
+        *API_IP, entry.name, entry.score, entry.max_tile, entry.avg_energy, entry.max_energy
     ))
     .send()
     .await

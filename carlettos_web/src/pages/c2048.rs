@@ -1,6 +1,6 @@
 use std::ops::AddAssign;
 
-use c2048_leader_board::C2048Leaderboard;
+use c2048_leaderboard::C2048Leaderboard;
 use csta::prelude::*;
 use csta_derive::Randomizable;
 use rand::prelude::*;
@@ -8,7 +8,7 @@ use yew::prelude::*;
 
 const L: usize = 4;
 
-pub mod c2048_leader_board;
+pub mod c2048_leaderboard;
 
 #[derive(Debug, Default, PartialEq)]
 pub struct Energy {
@@ -147,6 +147,7 @@ pub struct C2048 {
     pub automoved: bool,
     pub show_leaderboard: bool,
     pub energies: Vec<isize>,
+    pub score: usize,
 }
 
 impl Randomizable for C2048 {
@@ -184,12 +185,12 @@ impl C2048 {
         self.grid[pos].exp = exp;
     }
 
-    pub fn highest(&self) -> &Tile {
-        self.grid.iter().max().unwrap()
+    pub fn avg_energy(&self) -> isize {
+        self.energies.iter().sum::<isize>() / self.energies.len() as isize
     }
 
-    pub fn score(&self) -> usize {
-        self.grid.iter().map(|t| 1 << t.exp).sum()
+    pub fn highest(&self) -> &Tile {
+        self.grid.iter().max().unwrap()
     }
 
     pub fn is_lose(&self) -> bool {
@@ -313,6 +314,9 @@ impl C2048 {
 
     pub fn reset(&mut self) {
         for tile in self.grid.iter_mut() {
+            if tile.is_merged {
+                self.score += 1 << tile.exp;
+            }
             tile.is_merged = false;
         }
         self.has_moved = false;
@@ -669,6 +673,7 @@ impl Component for C2048 {
         html! {
             <div onkeydown={cb} tabIndex="0" class="c2048">
                 <section class="c2048-container">
+                    <h2 class="c2048-score"> {format!("Score: {}", self.score)} </h2>
                     <div ontouchmove={tcb} ontouchend={ote} class="c2048-game">
                         { for game }
                     </div>
@@ -696,7 +701,7 @@ impl Component for C2048 {
                         </div>
                     </div>
                 </section>
-                <C2048Leaderboard show_leaderboard={self.show_leaderboard} score={self.score()} max_tile={1 << self.highest().exp} max_energy={self.energies.iter().max().unwrap()} min_energy={self.energies.iter().min().unwrap()}/>
+                <C2048Leaderboard show_leaderboard={self.show_leaderboard} score={self.score} max_tile={1 << self.highest().exp} max_energy={self.energies.iter().max().unwrap()} avg_energy={self.avg_energy()}/>
             </div>
         }
     }

@@ -25,3 +25,10 @@ SELECT * FROM vote
 exit
 bye
 quit
+exit
+use ns root
+use db database
+select * from c2048
+info for table c2048
+remove table c2048
+info for table c2048
